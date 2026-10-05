@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
@@ -23,6 +24,7 @@ export default function Items() {
   const [search, setSearch] = useState('');
   const dq = useDebounced(search);
   const cats = useAllCategories();
+  const can = useCan();
   const [editing, setEditing] = useState<Item | 'new' | null>(null);
   const { data, isLoading, error } = useList<Item>('/admin/items', 'items', { category_id: categoryId || undefined, q: dq || undefined, limit: 500 });
   const catName = (id: number) => cats.data?.find((c) => c.id === id)?.name ?? `#${id}`;
@@ -31,7 +33,7 @@ export default function Items() {
     <div className="stack">
       <div className="page-head">
         <div><h1>Items</h1><p>The shared menu. Every kitchen carrying a category sells that category's items; there are no kitchen-exclusive dishes.</p></div>
-        <button className="btn primary" onClick={() => setEditing('new')}>+ New item</button>
+        {can('manage') && <button className="btn primary" onClick={() => setEditing('new')}>+ New item</button>}
       </div>
       <div className="card">
         <div className="toolbar">
@@ -49,7 +51,7 @@ export default function Items() {
                 <thead><tr><th>Item</th><th>Category</th><th>Added by</th><th>Status</th><th className="num">Price</th></tr></thead>
                 <tbody>
                   {data!.rows.map((it) => (
-                    <tr key={it.id} className="clickable" onClick={() => setEditing(it)}>
+                    <tr key={it.id} className={can('manage') ? 'clickable' : undefined} onClick={can('manage') ? () => setEditing(it) : undefined}>
                       <td>
                         <div className="row" style={{ flexWrap: 'nowrap' }}>
                           {it.image_url ? <img className="thumb" src={it.image_url} alt="" /> : <div className="thumb" />}

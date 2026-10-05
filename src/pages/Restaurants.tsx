@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ type Filter = 'all' | 'active' | 'inactive' | 'suspended';
 
 export default function Restaurants() {
   const nav = useNavigate();
+  const can = useCan();
   const q = useQuery({
     queryKey: ['/admin/restaurants'],
     queryFn: () => api.get<{ restaurants: Restaurant[] }>('/admin/restaurants'),
@@ -32,7 +34,7 @@ export default function Restaurants() {
     <div className="stack">
       <div className="page-head">
         <div><h1>Restaurants</h1><p>Partner kitchens. Onboarding is admin-only; kitchens can't sign themselves up.</p></div>
-        <button className="btn primary" onClick={() => setOnboard(true)}>+ Onboard kitchen</button>
+        {can('manage') && <button className="btn primary" onClick={() => setOnboard(true)}>+ Onboard kitchen</button>}
       </div>
       <div className="card">
         <Tabs value={filter} onChange={setFilter} tabs={(['all', 'active', 'inactive', 'suspended'] as Filter[]).map((s) => ({

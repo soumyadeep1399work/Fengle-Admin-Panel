@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
@@ -12,6 +13,7 @@ type Filter = 'active' | 'inactive' | 'all';
 
 export default function Categories() {
   const q = useAllCategories();
+  const can = useCan();
   const [filter, setFilter] = useState<Filter>('active');
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
   const [merging, setMerging] = useState<Category | null>(null);
@@ -31,7 +33,7 @@ export default function Categories() {
           <h1>Categories</h1>
           <p>Kitchens can create categories themselves. Use rename or merge to clean up near-duplicates (“Momo” vs “Momos”).</p>
         </div>
-        <button className="btn primary" onClick={() => setEditing('new')}>+ New category</button>
+        {can('manage') && <button className="btn primary" onClick={() => setEditing('new')}>+ New category</button>}
       </div>
       <div className="card">
         <Tabs value={filter} onChange={setFilter} tabs={[
@@ -60,11 +62,11 @@ export default function Categories() {
                       <td className="num">{c.item_count !== undefined ? <Link to={`/items?category_id=${c.id}`}>{num(c.item_count)}</Link> : '—'}</td>
                       <td className="num">{c.restaurant_count !== undefined ? num(c.restaurant_count) : '—'}</td>
                       <td className="small">{c.prep_time_min_minutes ? `${c.prep_time_min_minutes}–${c.prep_time_max_minutes ?? c.prep_time_min_minutes} min` : '—'}</td>
-                      <td className="right nowrap">
+                      <td className="right nowrap">{can('manage') && <>
                         <button className="btn sm ghost" onClick={() => setEditing(c)}>Edit</button>
                         <button className="btn sm ghost" onClick={() => setMerging(c)}>Merge</button>
                         <button className="btn sm ghost" onClick={() => setToggling(c)}>{bool(c.is_active) ? 'Deactivate' : 'Activate'}</button>
-                      </td>
+                      </>}</td>
                     </tr>
                   ))}
                 </tbody>

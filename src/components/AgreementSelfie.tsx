@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api, fetchBlob } from '../api/client';
@@ -39,6 +40,7 @@ export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, versi
   const review = useAction((v: { decision: 'approve' | 'deny'; reason?: string }) => api.post(`/admin/${kind}/${id}/verification`, v), {
     success: 'Verification updated', invalidate: [`/admin/${kind}`], onDone: () => setDenying(false),
   });
+  const can = useCan();
   const img = useQuery({
     queryKey: ['agreement-selfie', kind, String(id)],
     queryFn: async () => URL.createObjectURL(await fetchBlob(`/admin/${kind}/${id}/agreement-selfie`)),
@@ -80,7 +82,7 @@ export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, versi
         {hasSelfie && verificationStatus === 'pending' && (
           <div className="alert warn">Waiting for your review. Until you approve it, they can't receive orders or use the app.</div>
         )}
-        {hasSelfie && (
+        {hasSelfie && can('manage') && (
           <div className="row">
             {verificationStatus !== 'approved' && (
               <button className="btn primary" disabled={review.isPending} onClick={() => review.mutate({ decision: 'approve' })}>Approve</button>

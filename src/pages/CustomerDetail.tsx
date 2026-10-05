@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Customer } from '../api/types';
@@ -17,6 +18,7 @@ export default function CustomerDetail() {
     queryFn: async () => normalizeCustomer(await api.get<Record<string, unknown>>(`/admin/customers/${id}`)),
   });
   const c = q.data;
+  const can = useCan();
   const [tab, setTab] = useState<'orders' | 'wallet'>('orders');
   const [blockOpen, setBlockOpen] = useState(false);
   const [creditOpen, setCreditOpen] = useState(false);
@@ -35,8 +37,8 @@ export default function CustomerDetail() {
         </div>
         {c && (
           <div className="row">
-            <button className="btn" onClick={() => setCreditOpen(true)}>Add wallet credit</button>
-            <button className={`btn ${c.status === 'active' ? 'danger' : ''}`} onClick={() => setBlockOpen(true)}>{c.status === 'active' ? 'Block' : 'Unblock'}</button>
+            {can('money') && <button className="btn" onClick={() => setCreditOpen(true)}>Add wallet credit</button>}
+            {can('manage') && <button className={`btn ${c.status === 'active' ? 'danger' : ''}`} onClick={() => setBlockOpen(true)}>{c.status === 'active' ? 'Block' : 'Unblock'}</button>}
           </div>
         )}
       </div>

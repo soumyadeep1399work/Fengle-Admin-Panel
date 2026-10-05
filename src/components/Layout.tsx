@@ -1,6 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import logo from '../assets/fengle-logo.png';
-import { useAuth } from '../auth';
+import { useState } from 'react';
+import { useAuth, useCan } from '../auth';
+import { roleLabel, type Permission } from '../lib/permissions';
+import { ChangePassword } from '../pages/Admins';
 import { API_URL } from '../api/client';
 
 const I = {
@@ -13,6 +16,7 @@ const I = {
   items: 'M4 6h16M4 12h16M4 18h10',
   users: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.5a4 4 0 010 7.5M22 21v-1a6 6 0 00-4-5.6',
   coupon: 'M3 9V6a1 1 0 011-1h16a1 1 0 011 1v3a3 3 0 000 6v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3a3 3 0 000-6zM9.5 9.5h.01M14.5 14.5h.01M15 9l-6 6',
+  admins: 'M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3zM9.5 12l2 2 3.5-4',
   promo: 'M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15 8a5 5 0 010 8M18 5a9 9 0 010 14',
 };
 
@@ -24,7 +28,7 @@ function Icon({ d }: { d: string }) {
   );
 }
 
-const NAV: { label: string; links: { to: string; label: string; icon: string; end?: boolean }[] }[] = [
+const NAV: { label: string; links: { to: string; label: string; icon: string; end?: boolean; perm?: Permission }[] }[] = [
   { label: 'Operations', links: [
     { to: '/', label: 'Dashboard', icon: I.dash, end: true },
     { to: '/orders', label: 'Orders', icon: I.orders },
@@ -40,13 +44,19 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
   ] },
   { label: 'Customers', links: [
     { to: '/customers', label: 'Customers', icon: I.users },
-    { to: '/campaigns', label: 'Campaign audience', icon: I.promo },
+    { to: '/campaigns', label: 'Campaign audience', icon: I.promo, perm: 'money' },
     { to: '/coupons', label: 'Coupons', icon: I.coupon },
+  ] },
+  { label: 'Settings', links: [
+    { to: '/admins', label: 'Admins', icon: I.admins, perm: 'admins' },
   ] },
 ];
 
 export default function Layout() {
   const { admin, logout } = useAuth();
+  const can = useCan();
+  const [pwOpen, setPwOpen] = useState(false);
+  const groups = NAV.map((g) => ({ ...g, links: g.links.filter((l) => !l.perm || can(l.perm)) })).filter((g) => g.links.length > 0);
   const isLive = !/localhost|127\.0\.0\.1/.test(API_URL);
   return (
     <div className="shell">
@@ -55,7 +65,7 @@ export default function Layout() {
           <img src={logo} alt="" />
           <div><b>Fengle</b><small>Admin</small></div>
         </div>
-        {NAV.map((g) => (
+        {groups.map((g) => (
           <div key={g.label} style={{ display: 'contents' }}>
             <div className="nav-label">{g.label}</div>
             {g.links.map((l) => (
@@ -68,12 +78,14 @@ export default function Layout() {
         <div className="sidebar-foot">
           <div>
             <div style={{ fontWeight: 700 }}>{admin?.name || admin?.email}</div>
-            <div style={{ opacity: 0.7 }}>{admin?.role?.replace('_', ' ')} · {isLive ? 'Live server' : 'Local server'}</div>
+            <div style={{ opacity: 0.7 }}>{roleLabel(admin?.role)} · {isLive ? 'Live server' : 'Local server'}</div>
           </div>
+          <button onClick={() => setPwOpen(true)}>Change password</button>
           <button onClick={logout}>Sign out</button>
         </div>
       </aside>
       <main className="main"><Outlet /></main>
+      {pwOpen && <ChangePassword onClose={() => setPwOpen(false)} />}
     </div>
   );
 }

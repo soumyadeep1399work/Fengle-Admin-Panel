@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, getToken, setToken, setUnauthorizedHandler } from './api/client';
+import { roleCan, type Permission } from './lib/permissions';
 
 export interface AdminUser { id: number; name: string | null; email: string; role: string }
 
@@ -44,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return <AuthContext.Provider value={{ admin, booting, login, logout }}>{children}</AuthContext.Provider>;
+}
+
+/** `can('money')` etc. for the signed-in admin's role. */
+export function useCan() {
+  const { admin } = useAuth();
+  return (perm: Permission) => roleCan(admin?.role, perm);
 }
 
 export function useAuth() {

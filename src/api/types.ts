@@ -210,3 +210,13 @@ export interface Coupon {
   redemption_count?: number;
   created_at?: string;
 }
+
+export interface AdminAccount {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_active?: boolean | number;
+  last_login_at?: string | null;
+  created_at?: string;
+}

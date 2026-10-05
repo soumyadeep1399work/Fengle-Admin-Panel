@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Rider } from '../api/types';
@@ -13,6 +14,7 @@ const LIMIT = 50;
 
 export default function Riders() {
   const nav = useNavigate();
+  const can = useCan();
   const [status, setStatus] = useState<Filter>('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -59,7 +61,7 @@ export default function Riders() {
                       <td><SelfieBadge hasSelfie={r.hasAgreementSelfie} status={r.verificationStatus} /></td>
                       <td className="muted small nowrap">{r.last_active_at ? ago(r.last_active_at) : `Joined ${ago(r.created_at)}`}</td>
                       <td className="right" onClick={(e) => e.stopPropagation()}>
-                        <button className="btn sm" onClick={() => setSettling(r)}>Settle</button>
+                        {can('money') && <button className="btn sm" onClick={() => setSettling(r)}>Settle</button>}
                       </td>
                     </tr>
                   ))}

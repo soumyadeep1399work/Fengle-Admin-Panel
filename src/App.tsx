@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuth } from './auth';
+import { useAuth, useCan } from './auth';
 import Layout from './components/Layout';
 import { Spinner } from './components/ui';
 import Login from './pages/Login';
@@ -17,11 +17,14 @@ import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
 import Campaigns from './pages/Campaigns';
 import Coupons from './pages/Coupons';
+import Admins from './pages/Admins';
 
 export default function App() {
   const { admin, booting } = useAuth();
+  const can = useCan();
   if (booting) return <Spinner />;
   if (!admin) return <Login />;
+  const home = <Navigate to="/" replace />;
   return (
     <Routes>
       <Route element={<Layout />}>
@@ -37,8 +40,9 @@ export default function App() {
         <Route path="items" element={<Items />} />
         <Route path="customers" element={<Customers />} />
         <Route path="customers/:id" element={<CustomerDetail />} />
-        <Route path="campaigns" element={<Campaigns />} />
+        <Route path="campaigns" element={can('money') ? <Campaigns /> : home} />
         <Route path="coupons" element={<Coupons />} />
+        <Route path="admins" element={can('admins') ? <Admins /> : home} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

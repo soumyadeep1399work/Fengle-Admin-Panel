@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -33,6 +34,7 @@ export default function OrderDetail() {
   const { id = '' } = useParams();
   const q = useQuery({ queryKey: ['/admin/orders/', id], queryFn: () => fetchOrder(id), refetchInterval: 20_000 });
   const o = q.data;
+  const can = useCan();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
 
@@ -56,8 +58,8 @@ export default function OrderDetail() {
         </div>
         {open && (
           <div className="row">
-            {o.status !== 'placed' && <button className="btn" onClick={() => setReassignOpen(true)}>Reassign rider</button>}
-            <button className="btn danger" onClick={() => setCancelOpen(true)}>Cancel order</button>
+            {o.status !== 'placed' && can('manage') && <button className="btn" onClick={() => setReassignOpen(true)}>Reassign rider</button>}
+            {can('cancel_order') && <button className="btn danger" onClick={() => setCancelOpen(true)}>Cancel order</button>}
           </div>
         )}
       </div>

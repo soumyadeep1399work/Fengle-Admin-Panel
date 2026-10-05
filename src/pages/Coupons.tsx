@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { api } from '../api/client';
 import type { Coupon, CouponTarget, Customer } from '../api/types';
@@ -41,6 +42,7 @@ function couponState(c: Coupon): { label: string; tone: string } {
 export default function Coupons() {
   const [page, setPage] = useState(1);
   const { data, isLoading, error } = useList<Coupon>('/admin/coupons', 'coupons', { page, limit: LIMIT });
+  const can = useCan();
   const [editing, setEditing] = useState<Coupon | 'new' | null>(null);
   const [toggling, setToggling] = useState<Coupon | null>(null);
 
@@ -55,7 +57,7 @@ export default function Coupons() {
           <h1>Coupons</h1>
           <p>Discount codes for a chosen group of customers. Creating a live coupon sends a push notification to that group.</p>
         </div>
-        <button className="btn primary" onClick={() => setEditing('new')}>+ New coupon</button>
+        {can('money') && <button className="btn primary" onClick={() => setEditing('new')}>+ New coupon</button>}
       </div>
       <div className="card">
         <QueryState isLoading={isLoading} error={error}>
@@ -76,10 +78,10 @@ export default function Coupons() {
                         <td className="small nowrap">
                           {c.valid_from ? dateTime(c.valid_from) : 'Now'} →<br />{c.valid_until ? dateTime(c.valid_until) : 'No end date'}
                         </td>
-                        <td className="right nowrap">
+                        <td className="right nowrap">{can('money') && <>
                           <button className="btn sm ghost" onClick={() => setEditing(c)}>Edit</button>
                           <button className="btn sm ghost" onClick={() => setToggling(c)}>{bool(c.is_active) ? 'Turn off' : 'Turn on'}</button>
-                        </td>
+                        </>}</td>
                       </tr>
                     );
                   })}

@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -44,6 +45,7 @@ export default function RestaurantDetail() {
   });
   const cats = useAllCategories();
   const r = q.data;
+  const can = useCan();
   const [edit, setEdit] = useState(false);
   const [statusTo, setStatusTo] = useState<(typeof STATUS_ACTIONS)['active'][number] | null>(null);
   const [addCat, setAddCat] = useState('');
@@ -73,7 +75,7 @@ export default function RestaurantDetail() {
           <h1 className="row" style={{ marginTop: 6 }}>{r?.name ?? 'Kitchen'} {r && <StatusBadge status={r.status} />}</h1>
           {r?.created_at && <p>Onboarded {dateTime(r.created_at)}</p>}
         </div>
-        {r && (
+        {r && can('manage') && (
           <div className="row">
             <button className="btn" onClick={() => setEdit(true)}>Edit details</button>
             {STATUS_ACTIONS[r.status].map((a) => (
@@ -118,18 +120,18 @@ export default function RestaurantDetail() {
                         {carried.map((c) => (
                           <span key={c.id} className="badge violet" style={{ paddingRight: 4 }}>
                             {c.name}
-                            <button className="x-btn" style={{ fontSize: 15, padding: '0 4px', color: 'inherit' }} aria-label={`Remove ${c.name}`} onClick={() => setRemoveCat(c)}>×</button>
+                            {can('manage') && <button className="x-btn" style={{ fontSize: 15, padding: '0 4px', color: 'inherit' }} aria-label={`Remove ${c.name}`} onClick={() => setRemoveCat(c)}>×</button>}
                           </span>
                         ))}
                       </div>
                     )}
-                    <div className="row" style={{ flexWrap: 'nowrap' }}>
+                    {can('manage') && <div className="row" style={{ flexWrap: 'nowrap' }}>
                       <select className="select" value={addCat} onChange={(e) => setAddCat(e.target.value)} aria-label="Category to add">
                         <option value="">Add a category…</option>
                         {addable.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                       <button className="btn" disabled={!addCat || add.isPending} onClick={() => add.mutate(Number(addCat))}>Add</button>
-                    </div>
+                    </div>}
                   </div>
                 </div>
 

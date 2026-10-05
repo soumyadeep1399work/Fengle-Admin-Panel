@@ -1,3 +1,4 @@
+import { useCan } from '../auth';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ export default function RiderDetail() {
   const { id = '' } = useParams();
   const q = useQuery({ queryKey: ['/admin/riders/', id], queryFn: () => fetchRider(id) });
   const r = q.data;
+  const can = useCan();
   const [tab, setTab] = useState<'orders' | 'ledger'>('orders');
   const [settling, setSettling] = useState(false);
   const [statusTo, setStatusTo] = useState<PartnerStatus | null>(null);
@@ -47,10 +49,10 @@ export default function RiderDetail() {
         </div>
         {r && (
           <div className="row">
-            <button className="btn primary" onClick={() => setSettling(true)}>Run settlement</button>
-            {r.status === 'active'
+            {can('money') && <button className="btn primary" onClick={() => setSettling(true)}>Run settlement</button>}
+            {can('manage') && (r.status === 'active'
               ? <button className="btn danger" onClick={() => setStatusTo('suspended')}>Suspend</button>
-              : <button className="btn" onClick={() => setStatusTo('active')}>Reactivate</button>}
+              : <button className="btn" onClick={() => setStatusTo('active')}>Reactivate</button>)}
           </div>
         )}
       </div>
