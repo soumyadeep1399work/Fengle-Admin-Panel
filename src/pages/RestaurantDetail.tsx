@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import type { OrderRow, PartnerStatus, Restaurant } from '../api/types';
 import { normalizeRestaurant } from '../api/normalize';
+import AgreementSelfie from '../components/AgreementSelfie';
 import MapPicker from '../components/MapPicker';
 import OrdersTable from '../components/OrdersTable';
 import RestaurantForm from '../components/RestaurantForm';
@@ -106,6 +107,7 @@ export default function RestaurantDetail() {
               </div>
 
               <div className="stack">
+                <AgreementSelfie kind="restaurants" id={r.id} hasSelfie={r.hasAgreementSelfie} acceptedAt={r.agreementAcceptedAt} version={r.agreementVersion} />
                 <div className="card">
                   <div className="card-head"><h3>Categories</h3><span className="muted small">{carried.length} carried</span></div>
                   <div className="card-pad stack">

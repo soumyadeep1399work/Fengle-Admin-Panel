@@ -144,6 +144,9 @@ export interface Restaurant {
   order_count?: number;
   rating_avg?: number | string | null;
   commission_history?: { id: number; rate_percent: Money; effective_from: string; changed_by_admin_id: number | null }[];
+  agreementAcceptedAt?: string | null;
+  agreementVersion?: number | null;
+  hasAgreementSelfie?: boolean;
 }
 
 export interface Rider {
@@ -160,6 +163,9 @@ export interface Rider {
   last_active_at?: string | null;
   ledger?: LedgerEntry[];
   orders?: OrderRow[];
+  agreementAcceptedAt?: string | null;
+  agreementVersion?: number | null;
+  hasAgreementSelfie?: boolean;
 }
 
 export interface Customer {

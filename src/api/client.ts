@@ -81,6 +81,23 @@ export const api = {
   del: <T>(path: string) => request<T>('DELETE', path),
 };
 
+/** Fetches an authenticated GET endpoint as a blob (an <img> tag can't send the Bearer token). */
+export async function fetchBlob(path: string): Promise<Blob> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { headers: { Authorization: `Bearer ${getToken() ?? ''}` } });
+  } catch {
+    throw new ApiError(0, 'Could not reach the server. Check your connection.', null);
+  }
+  if (!res.ok) {
+    let body: unknown = null;
+    try { body = await res.json(); } catch { /* not json */ }
+    if (res.status === 401) onUnauthorized();
+    throw new ApiError(res.status, (body as { error?: string } | null)?.error || `Request failed (${res.status})`, body);
+  }
+  return res.blob();
+}
+
 /** Downloads a file from an authenticated GET endpoint (e.g. the customer CSV export). */
 export async function download(path: string, query: Query, filename: string) {
   const res = await fetch(`${API_URL}${path}${qs(query)}`, {
