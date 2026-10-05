@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchBlob } from '../api/client';
-import { Badge, Modal, QueryState } from './ui';
+import { api, fetchBlob } from '../api/client';
+import type { VerificationStatus } from '../api/types';
+import { useAction } from '../lib/hooks';
+import { Badge, Confirm, Modal, QueryState } from './ui';
 import { dateTime } from '../lib/format';
 
 interface Props {
@@ -10,12 +12,20 @@ interface Props {
   hasSelfie?: boolean;
   acceptedAt?: string | null;
   version?: number | null;
+  verificationStatus?: VerificationStatus;
+  deniedReason?: string | null;
 }
 
 /** The mini-badge used in list rows: did this partner upload their verification selfie? */
-export function SelfieBadge({ hasSelfie }: { hasSelfie?: boolean }) {
+export function SelfieBadge({ hasSelfie, status }: { hasSelfie?: boolean; status?: VerificationStatus }) {
   if (hasSelfie === undefined) return <span className="muted">—</span>;
-  return hasSelfie ? <Badge tone="green" dot>Uploaded</Badge> : <Badge tone="gold" dot>Not uploaded</Badge>;
+  if (!hasSelfie) {
+    // An approved account with no selfie predates in-app verification: nothing to review.
+    return status === 'approved' ? <Badge dot>No selfie (older account)</Badge> : <Badge tone="gold" dot>Not uploaded</Badge>;
+  }
+  if (status === 'approved') return <Badge tone="green" dot>Approved</Badge>;
+  if (status === 'denied') return <Badge tone="red" dot>Denied</Badge>;
+  return <Badge tone="gold" dot>Awaiting review</Badge>;
 }
 
 /**
@@ -23,8 +33,12 @@ export function SelfieBadge({ hasSelfie }: { hasSelfie?: boolean }) {
  * backend's storage.service.js) — it's streamed to admins only, so it is fetched with
  * the Bearer token and shown through a temporary blob URL.
  */
-export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, version }: Props) {
+export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, version, verificationStatus, deniedReason }: Props) {
   const [zoom, setZoom] = useState(false);
+  const [denying, setDenying] = useState(false);
+  const review = useAction((v: { decision: 'approve' | 'deny'; reason?: string }) => api.post(`/admin/${kind}/${id}/verification`, v), {
+    success: 'Verification updated', invalidate: [`/admin/${kind}`], onDone: () => setDenying(false),
+  });
   const img = useQuery({
     queryKey: ['agreement-selfie', kind, String(id)],
     queryFn: async () => URL.createObjectURL(await fetchBlob(`/admin/${kind}/${id}/agreement-selfie`)),
@@ -39,7 +53,7 @@ export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, versi
 
   return (
     <div className="card">
-      <div className="card-head"><h3>Agreement &amp; selfie</h3><SelfieBadge hasSelfie={hasSelfie} /></div>
+      <div className="card-head"><h3>Agreement &amp; selfie</h3><SelfieBadge hasSelfie={hasSelfie} status={verificationStatus} /></div>
       <div className="card-pad stack">
         <div className="row" style={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
           <dl className="kv" style={{ flex: '1 1 220px', minWidth: 0 }}>
@@ -60,6 +74,22 @@ export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, versi
             </div>
           )}
         </div>
+        {hasSelfie && verificationStatus === 'denied' && (
+          <div className="alert error">Denied{deniedReason ? `: ${deniedReason}` : ''}. They must retake the photo before they can use the app.</div>
+        )}
+        {hasSelfie && verificationStatus === 'pending' && (
+          <div className="alert warn">Waiting for your review. Until you approve it, they can't receive orders or use the app.</div>
+        )}
+        {hasSelfie && (
+          <div className="row">
+            {verificationStatus !== 'approved' && (
+              <button className="btn primary" disabled={review.isPending} onClick={() => review.mutate({ decision: 'approve' })}>Approve</button>
+            )}
+            {verificationStatus !== 'denied' && (
+              <button className="btn danger" disabled={review.isPending} onClick={() => setDenying(true)}>Deny</button>
+            )}
+          </div>
+        )}
         {hasSelfie ? (
           <small className="muted">Click the photo to enlarge. Visible to admins only.</small>
         ) : (
@@ -70,6 +100,11 @@ export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, versi
           </div>
         )}
       </div>
+      {denying && (
+        <Confirm title="Deny this photo?" danger confirmLabel="Deny" reasonLabel="Reason (shown to them in the app)"
+          message="They'll be asked to retake their selfie, and can't use the app or receive orders until you approve the new one."
+          busy={review.isPending} error={review.error} onConfirm={(reason) => review.mutate({ decision: 'deny', reason })} onClose={() => setDenying(false)} />
+      )}
       {zoom && url && (
         <Modal title="Verification selfie" wide onClose={() => setZoom(false)}>
           <img src={url} alt="Verification selfie" style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 8 }} />

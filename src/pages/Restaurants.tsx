@@ -55,7 +55,7 @@ export default function Restaurants() {
                       <td className="num">{Number(r.radius_km)} km</td>
                       <td className="num">{Number(r.commission_rate_percent)}%</td>
                       <td className="num">{r.order_count !== undefined ? num(r.order_count) : '—'}</td>
-                      <td><SelfieBadge hasSelfie={r.hasAgreementSelfie} /></td>
+                      <td><SelfieBadge hasSelfie={r.hasAgreementSelfie} status={r.verificationStatus} /></td>
                     </tr>
                   ))}
                 </tbody>

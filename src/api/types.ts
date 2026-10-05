@@ -8,6 +8,7 @@ export type OrderStatus = 'placed' | 'accepted' | 'picked_up' | 'on_the_way' | '
 export type PaymentMethod = 'upi' | 'card' | 'netbanking' | 'cod' | 'wallet';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
 export type PartnerStatus = 'active' | 'inactive' | 'suspended';
+export type VerificationStatus = 'pending' | 'approved' | 'denied';
 
 export interface Paged { total?: number; page?: number; limit?: number }
 
@@ -147,6 +148,8 @@ export interface Restaurant {
   agreementAcceptedAt?: string | null;
   agreementVersion?: number | null;
   hasAgreementSelfie?: boolean;
+  verificationStatus?: VerificationStatus;
+  verificationDeniedReason?: string | null;
 }
 
 export interface Rider {
@@ -166,6 +169,8 @@ export interface Rider {
   agreementAcceptedAt?: string | null;
   agreementVersion?: number | null;
   hasAgreementSelfie?: boolean;
+  verificationStatus?: VerificationStatus;
+  verificationDeniedReason?: string | null;
 }
 
 export interface Customer {

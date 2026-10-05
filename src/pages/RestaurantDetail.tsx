@@ -107,7 +107,7 @@ export default function RestaurantDetail() {
               </div>
 
               <div className="stack">
-                <AgreementSelfie kind="restaurants" id={r.id} hasSelfie={r.hasAgreementSelfie} acceptedAt={r.agreementAcceptedAt} version={r.agreementVersion} />
+                <AgreementSelfie kind="restaurants" id={r.id} hasSelfie={r.hasAgreementSelfie} acceptedAt={r.agreementAcceptedAt} version={r.agreementVersion} verificationStatus={r.verificationStatus} deniedReason={r.verificationDeniedReason} />
                 <div className="card">
                   <div className="card-head"><h3>Categories</h3><span className="muted small">{carried.length} carried</span></div>
                   <div className="card-pad stack">
