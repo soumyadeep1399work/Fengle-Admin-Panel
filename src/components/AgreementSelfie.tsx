@@ -41,22 +41,27 @@ export default function AgreementSelfie({ kind, id, hasSelfie, acceptedAt, versi
     <div className="card">
       <div className="card-head"><h3>Agreement &amp; selfie</h3><SelfieBadge hasSelfie={hasSelfie} /></div>
       <div className="card-pad stack">
-        <dl className="kv">
-          <dt>Accepted in app</dt><dd>{acceptedAt ? dateTime(acceptedAt) : 'Not yet'}</dd>
-          <dt>Agreement version</dt><dd>{version ?? '—'}</dd>
-        </dl>
+        <div className="row" style={{ alignItems: 'flex-start', justifyContent: 'space-between', gap: 20 }}>
+          <dl className="kv" style={{ flex: '1 1 220px', minWidth: 0 }}>
+            <dt>Accepted in app</dt><dd>{acceptedAt ? dateTime(acceptedAt) : 'Not yet'}</dd>
+            <dt>Agreement version</dt><dd>{version ?? '—'}</dd>
+          </dl>
+          {hasSelfie && (
+            <div style={{ flex: '0 0 auto' }}>
+              <QueryState isLoading={img.isLoading} error={img.error}>
+                {url && (
+                  <button type="button" onClick={() => setZoom(true)} aria-label="Enlarge selfie"
+                    style={{ border: 0, padding: 0, background: 'none', cursor: 'zoom-in', display: 'block' }}>
+                    <img src={url} alt="Verification selfie"
+                      style={{ width: 150, height: 200, objectFit: 'cover', borderRadius: 12, display: 'block' }} />
+                  </button>
+                )}
+              </QueryState>
+            </div>
+          )}
+        </div>
         {hasSelfie ? (
-          <QueryState isLoading={img.isLoading} error={img.error}>
-            {url && (
-              <>
-                <button type="button" onClick={() => setZoom(true)} aria-label="Enlarge selfie"
-                  style={{ border: 0, padding: 0, background: 'none', cursor: 'zoom-in', alignSelf: 'flex-start' }}>
-                  <img src={url} alt="Verification selfie" style={{ width: 220, maxWidth: '100%', borderRadius: 12, display: 'block' }} />
-                </button>
-                <small className="muted">Click the photo to enlarge. Visible to admins only.</small>
-              </>
-            )}
-          </QueryState>
+          <small className="muted">Click the photo to enlarge. Visible to admins only.</small>
         ) : (
           <div className="muted">
             {acceptedAt
