@@ -17,6 +17,7 @@ const I = {
   users: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.5a4 4 0 010 7.5M22 21v-1a6 6 0 00-4-5.6',
   coupon: 'M3 9V6a1 1 0 011-1h16a1 1 0 011 1v3a3 3 0 000 6v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3a3 3 0 000-6zM9.5 9.5h.01M14.5 14.5h.01M15 9l-6 6',
   admins: 'M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3zM9.5 12l2 2 3.5-4',
+  docs: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
   promo: 'M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15 8a5 5 0 010 8M18 5a9 9 0 010 14',
 };
 
@@ -37,6 +38,7 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
     { to: '/restaurants', label: 'Restaurants', icon: I.kitchen },
     { to: '/riders', label: 'Riders', icon: I.rider },
     { to: '/settlements', label: 'Settlements', icon: I.settle },
+    { to: '/documents', label: 'Documents', icon: I.docs },
   ] },
   { label: 'Catalog', links: [
     { to: '/categories', label: 'Categories', icon: I.cat },

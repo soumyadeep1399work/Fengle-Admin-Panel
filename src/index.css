@@ -229,3 +229,9 @@ table.tbl { width: 100%; border-collapse: collapse; }
 .chip-toggle.on { background: var(--primary); border-color: var(--primary); color: #fff; }
 hr.sep { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
 .chart { width: 100%; height: auto; display: block; }
+
+/* ---------- Partner documents ---------- */
+.doc-row { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.doc-row:first-of-type { border-top: 0; }
+.linklike { border: 0; background: none; padding: 0; color: var(--primary-mid); font-weight: 700; cursor: pointer; font-size: inherit; }
+.linklike:hover { text-decoration: underline; }

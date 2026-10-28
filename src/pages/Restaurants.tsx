@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import type { Restaurant } from '../api/types';
 import { SelfieBadge } from '../components/AgreementSelfie';
+import { DocsBadge } from '../components/PartnerDocuments';
 import RestaurantForm from '../components/RestaurantForm';
 import { Empty, QueryState, StatusBadge, Tabs } from '../components/ui';
 import { num } from '../lib/format';
@@ -47,7 +48,7 @@ export default function Restaurants() {
           {rows.length === 0 ? <Empty title="No kitchens match" /> : (
             <div className="table-wrap">
               <table className="tbl">
-                <thead><tr><th>Kitchen</th><th>Status</th><th>Address</th><th className="num">Radius</th><th className="num">Commission</th><th className="num">Orders</th><th>Selfie</th></tr></thead>
+                <thead><tr><th>Kitchen</th><th>Status</th><th>Address</th><th className="num">Radius</th><th className="num">Commission</th><th className="num">Orders</th><th>Selfie</th><th>Documents</th></tr></thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.id} className="clickable" onClick={() => nav(`/restaurants/${r.id}`)}>
@@ -58,6 +59,7 @@ export default function Restaurants() {
                       <td className="num">{Number(r.commission_rate_percent)}%</td>
                       <td className="num">{r.order_count !== undefined ? num(r.order_count) : '—'}</td>
                       <td><SelfieBadge hasSelfie={r.hasAgreementSelfie} status={r.verificationStatus} /></td>
+                      <td><DocsBadge summary={r.documents} /></td>
                     </tr>
                   ))}
                 </tbody>

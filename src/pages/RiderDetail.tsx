@@ -6,6 +6,7 @@ import { api, ApiError } from '../api/client';
 import type { PartnerStatus, Rider } from '../api/types';
 import { normalizeRider } from '../api/normalize';
 import AgreementSelfie from '../components/AgreementSelfie';
+import PartnerDocumentsCard from '../components/PartnerDocuments';
 import LedgerTable from '../components/LedgerTable';
 import OrdersTable from '../components/OrdersTable';
 import SettleRider from '../components/SettleRider';
@@ -71,6 +72,7 @@ export default function RiderDetail() {
               <div className="card stat"><div className="label">Vehicle</div><div className="value" style={{ fontSize: 18 }}>{r.vehicle_type || '—'}</div><div className="sub">{r.vehicle_number}</div></div>
             </div>
 
+            <PartnerDocumentsCard ownerType="rider" id={r.id} />
             <AgreementSelfie kind="riders" id={r.id} hasSelfie={r.hasAgreementSelfie} acceptedAt={r.agreementAcceptedAt} version={r.agreementVersion} verificationStatus={r.verificationStatus} deniedReason={r.verificationDeniedReason} />
 
             <div className="card">

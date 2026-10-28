@@ -18,6 +18,7 @@ import CustomerDetail from './pages/CustomerDetail';
 import Campaigns from './pages/Campaigns';
 import Coupons from './pages/Coupons';
 import Admins from './pages/Admins';
+import Documents from './pages/Documents';
 
 export default function App() {
   const { admin, booting } = useAuth();
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="riders" element={<Riders />} />
         <Route path="riders/:id" element={<RiderDetail />} />
         <Route path="settlements" element={<Settlements />} />
+        <Route path="documents" element={<Documents />} />
         <Route path="categories" element={<Categories />} />
         <Route path="items" element={<Items />} />
         <Route path="customers" element={<Customers />} />

@@ -148,6 +148,7 @@ export interface Restaurant {
   agreementAcceptedAt?: string | null;
   agreementVersion?: number | null;
   hasAgreementSelfie?: boolean;
+  documents?: DocumentSummary;
   verificationStatus?: VerificationStatus;
   verificationDeniedReason?: string | null;
 }
@@ -169,6 +170,7 @@ export interface Rider {
   agreementAcceptedAt?: string | null;
   agreementVersion?: number | null;
   hasAgreementSelfie?: boolean;
+  documents?: DocumentSummary;
   verificationStatus?: VerificationStatus;
   verificationDeniedReason?: string | null;
 }
@@ -219,4 +221,55 @@ export interface AdminAccount {
   is_active?: boolean | number;
   last_login_at?: string | null;
   created_at?: string;
+}
+
+export type DocType = 'aadhaar' | 'fssai' | 'trade_license' | 'driving_license';
+export type DocStatus = 'pending' | 'approved' | 'rejected';
+export type DocSummaryStatus = 'complete' | 'expiring' | 'pending' | 'rejected' | 'expired' | 'missing';
+
+export interface DocumentSummary {
+  status: DocSummaryStatus;
+  complete: boolean;
+  validUntil: string | null;
+  missing: DocType[];
+  pendingCount: number;
+}
+
+export interface DocRequirement {
+  type: DocType;
+  label: string;
+  required: boolean;
+  needsNumber: boolean;
+  needsExpiry: boolean;
+  numberLabel?: string;
+  hint?: string;
+}
+
+export interface PartnerDocument {
+  id: number;
+  docType: DocType;
+  label: string;
+  status: DocStatus;
+  docNumber: string | null;
+  expiryDate: string | null;
+  rejectionReason: string | null;
+  contentType: string;
+  fileSize: number;
+  uploadedAt: string;
+  reviewedAt: string | null;
+  approvedVersion?: PartnerDocument | null;
+  ownerType?: 'restaurant' | 'rider';
+  ownerId?: number;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+}
+
+export interface OwnerDocuments {
+  owner: { id: number; name: string | null; phone: string; status: string };
+  ownerType: 'restaurant' | 'rider';
+  enforced: boolean;
+  requirements: DocRequirement[];
+  documents: Partial<Record<DocType, PartnerDocument | null>>;
+  summary: DocumentSummary;
+  history: PartnerDocument[];
 }

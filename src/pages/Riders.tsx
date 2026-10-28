@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Rider } from '../api/types';
 import { SelfieBadge } from '../components/AgreementSelfie';
+import { DocsBadge } from '../components/PartnerDocuments';
 import SettleRider from '../components/SettleRider';
 import { Empty, Pager, QueryState, StatusBadge, Tabs, useDebounced } from '../components/ui';
 import { useList } from '../lib/hooks';
@@ -47,7 +48,7 @@ export default function Riders() {
               <table className="tbl">
                 <thead><tr>
                   <th>Rider</th><th>Status</th><th>Vehicle</th><th className="num">COD held</th><th className="num">Unsettled</th>
-                  <th className="num">Wallet</th><th>Selfie</th><th>Last active</th><th />
+                  <th className="num">Wallet</th><th>Selfie</th><th>Documents</th><th>Last active</th><th />
                 </tr></thead>
                 <tbody>
                   {rows.map((r) => (
@@ -59,6 +60,7 @@ export default function Riders() {
                       <td className="num">{r.unsettled_deliveries !== undefined ? num(r.unsettled_deliveries) : '—'}</td>
                       <td className="num" style={{ color: Number(r.wallet_balance) < 0 ? 'var(--red)' : undefined, fontWeight: 700 }}>{money(r.wallet_balance)}</td>
                       <td><SelfieBadge hasSelfie={r.hasAgreementSelfie} status={r.verificationStatus} /></td>
+                      <td><DocsBadge summary={r.documents} /></td>
                       <td className="muted small nowrap">{r.last_active_at ? ago(r.last_active_at) : `Joined ${ago(r.created_at)}`}</td>
                       <td className="right" onClick={(e) => e.stopPropagation()}>
                         {can('money') && <button className="btn sm" onClick={() => setSettling(r)}>Settle</button>}
