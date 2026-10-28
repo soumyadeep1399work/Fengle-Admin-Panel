@@ -72,7 +72,8 @@ export default function RestaurantForm({ restaurant, onClose, onSaved }: {
           <Field label="Email"><input className="input" type="email" value={f.email} onChange={(e) => set('email', e.target.value)} disabled={editing} /></Field>
         </div>
         <Field label="Address"><input className="input" value={f.address} onChange={(e) => set('address', e.target.value)} required /></Field>
-        <MapPicker lat={f.lat} lng={f.lng} radiusKm={Number(f.radius_km) || undefined} onChange={(lat, lng) => setF((p) => ({ ...p, lat, lng }))} />
+        <MapPicker lat={f.lat} lng={f.lng} radiusKm={Number(f.radius_km) || undefined} onChange={(lat, lng) => setF((p) => ({ ...p, lat, lng }))}
+          onAddressFound={(addr) => setF((p) => (p.address.trim() ? p : { ...p, address: addr }))} />
         <div className="grid-2">
           <Field label="Delivery radius (km)" hint="Default 5 km. Orders cascade to other kitchens up to 7 km.">
             <input className="input" type="number" step="0.5" min="0.5" max="7" value={f.radius_km} onChange={(e) => set('radius_km', e.target.value)} />

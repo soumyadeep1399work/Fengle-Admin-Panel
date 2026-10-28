@@ -235,3 +235,9 @@ hr.sep { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
 .doc-row:first-of-type { border-top: 0; }
 .linklike { border: 0; background: none; padding: 0; color: var(--primary-mid); font-weight: 700; cursor: pointer; font-size: inherit; }
 .linklike:hover { text-decoration: underline; }
+
+/* ---------- Address search (kitchen map) ---------- */
+.addr-search { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.addr-results { position: absolute; top: 44px; left: 0; right: 0; z-index: 1200; background: #fff; border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); max-height: 260px; overflow-y: auto; }
+.addr-result { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 9px 10px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.addr-result:hover { background: var(--primary-tint-2); }
