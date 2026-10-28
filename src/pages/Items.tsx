@@ -3,6 +3,11 @@ import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Item, QuantityUnit } from '../api/types';
+import ImageUpload from '../components/ImageUpload';
+import { Empty, Field, Modal, QueryState, Tabs, useDebounced, errMsg } from '../components/ui';
+import { useAllCategories } from '../lib/catalog';
+import { useAction, useList } from '../lib/hooks';
+import { bool, dateTime, money } from '../lib/format';
 
 const QUANTITY_UNITS: { value: QuantityUnit; label: string }[] = [
   { value: 'pc', label: 'pc (pieces)' },
@@ -11,11 +16,8 @@ const QUANTITY_UNITS: { value: QuantityUnit; label: string }[] = [
   { value: 'ml', label: 'ml' },
   { value: 'ltr', label: 'ltr (litres)' },
 ];
-import ImageUpload from '../components/ImageUpload';
-import { Empty, Field, Modal, QueryState, useDebounced, errMsg } from '../components/ui';
-import { useAllCategories } from '../lib/catalog';
-import { useAction, useList } from '../lib/hooks';
-import { bool, money } from '../lib/format';
+
+type View = 'all' | 'awaiting' | 'hidden';
 
 function VegMark({ veg }: { veg: boolean }) {
   const c = veg ? 'var(--green)' : 'var(--red)';
@@ -26,34 +28,78 @@ function VegMark({ veg }: { veg: boolean }) {
   );
 }
 
+/** Price cell: waiting for a price, an offer in force (struck normal price), or the plain price. */
+function PriceCell({ it }: { it: Item }) {
+  if (bool(it.awaiting_price)) return <span className="badge gold">Waiting for price</span>;
+  if (bool(it.offer_active) && it.offer_price != null) {
+    return (
+      <div>
+        <span className="muted" style={{ textDecoration: 'line-through', marginRight: 6 }}>{money(it.price)}</span>
+        <span className="cell-main" style={{ color: 'var(--green)' }}>{money(it.offer_price)}</span>
+        <div className="cell-sub">{it.offer_ends_at ? `Offer till ${dateTime(it.offer_ends_at)}` : 'Offer, no end date'}</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <span className="cell-main">{money(it.price)}</span>
+      {it.offer_price != null && !bool(it.offer_active) && <div className="cell-sub">Offer ended</div>}
+    </div>
+  );
+}
+
 export default function Items() {
   const [params, setParams] = useSearchParams();
   const categoryId = params.get('category_id') ?? '';
+  const view = (params.get('view') ?? 'all') as View;
   const [search, setSearch] = useState('');
   const dq = useDebounced(search);
   const cats = useAllCategories();
   const can = useCan();
   const [editing, setEditing] = useState<Item | 'new' | null>(null);
-  const { data, isLoading, error } = useList<Item>('/admin/items', 'items', { category_id: categoryId || undefined, q: dq || undefined, limit: 500 });
+  const { data, isLoading, error } = useList<Item>('/admin/items', 'items', {
+    category_id: categoryId || undefined,
+    q: dq || undefined,
+    awaiting_price: view === 'awaiting' ? 1 : undefined,
+    is_active: view === 'hidden' ? 0 : undefined,
+    limit: 500,
+  });
+  // Separate tiny query so the tab can show how many dishes are waiting, whichever tab is open.
+  const awaiting = useList<Item>('/admin/items', 'items', { awaiting_price: 1, limit: 500 });
+  const awaitingCount = awaiting.data?.total ?? awaiting.data?.rows.length;
   const catName = (id: number) => cats.data?.find((c) => c.id === id)?.name ?? `#${id}`;
+  const setParam = (k: string, v: string) => {
+    const n = new URLSearchParams(params);
+    if (v) n.set(k, v); else n.delete(k);
+    setParams(n, { replace: true });
+  };
 
   return (
     <div className="stack">
       <div className="page-head">
-        <div><h1>Items</h1><p>The shared menu. Every kitchen carrying a category sells that category's items; there are no kitchen-exclusive dishes.</p></div>
+        <div>
+          <h1>Items</h1>
+          <p>The shared menu. Every kitchen carrying a category sells that category's items. Only admins set prices; dishes a kitchen proposes wait here for a price.</p>
+        </div>
         {can('manage') && <button className="btn primary" onClick={() => setEditing('new')}>+ New item</button>}
       </div>
       <div className="card">
+        <Tabs value={view} onChange={(v) => setParam('view', v === 'all' ? '' : v)} tabs={[
+          { value: 'all', label: 'All' },
+          { value: 'awaiting', label: 'Waiting for price', count: awaitingCount },
+          { value: 'hidden', label: 'Hidden' },
+        ]} />
         <div className="toolbar">
           <input className="input search" placeholder="Search dishes" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select className="select" value={categoryId} aria-label="Category"
-            onChange={(e) => { const n = new URLSearchParams(params); if (e.target.value) n.set('category_id', e.target.value); else n.delete('category_id'); setParams(n, { replace: true }); }}>
+          <select className="select" value={categoryId} aria-label="Category" onChange={(e) => setParam('category_id', e.target.value)}>
             <option value="">All categories</option>
             {(cats.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <QueryState isLoading={isLoading} error={error}>
-          {(data?.rows.length ?? 0) === 0 ? <Empty title="No items" /> : (
+          {(data?.rows.length ?? 0) === 0 ? (
+            <Empty title={view === 'awaiting' ? 'No dishes waiting for a price' : 'No items'} />
+          ) : (
             <div className="table-wrap">
               <table className="tbl">
                 <thead><tr><th>Item</th><th>Category</th><th>Added by</th><th>Status</th><th className="num">Price</th></tr></thead>
@@ -70,9 +116,16 @@ export default function Items() {
                         </div>
                       </td>
                       <td>{it.category_name ?? catName(it.category_id)}</td>
-                      <td className="small muted">{it.created_by_type === 'restaurant' ? 'Kitchen' : 'Fengle'}</td>
-                      <td>{it.is_active === undefined || bool(it.is_active) ? <span className="badge green">Active</span> : <span className="badge">Hidden</span>}</td>
-                      <td className="num cell-main">{money(it.price)}</td>
+                      <td className="small">
+                        {it.created_by_type === 'restaurant'
+                          ? <>{it.created_by_restaurant_name || 'Kitchen'}<div className="cell-sub">Kitchen</div></>
+                          : <span className="muted">Fengle</span>}
+                      </td>
+                      <td>
+                        {bool(it.awaiting_price) ? <span className="badge gold">Not published</span>
+                          : it.is_active === undefined || bool(it.is_active) ? <span className="badge green">Active</span> : <span className="badge">Hidden</span>}
+                      </td>
+                      <td className="num"><PriceCell it={it} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -86,48 +139,93 @@ export default function Items() {
   );
 }
 
+/** datetime-local value (local time) <-> ISO */
+function toLocalInput(iso: string | null | undefined) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCategory: string; onClose: () => void }) {
   const cats = useAllCategories();
+  const awaitingPrice = !!item && bool(item.awaiting_price);
+  const initialOffer = item?.offer_price != null ? String(Number(item.offer_price)) : '';
+  const initialEnds = toLocalInput(item?.offer_ends_at);
   const [f, setF] = useState({
     category_id: item ? String(item.category_id) : defaultCategory,
     name: item?.name ?? '',
     description: item?.description ?? '',
-    price: item ? String(Number(item.price)) : '',
+    price: item && item.price != null ? String(Number(item.price)) : '',
     quantity_value: item?.quantity_value != null ? String(Number(item.quantity_value)) : '',
     quantity_unit: (item?.quantity_unit ?? '') as QuantityUnit | '',
     is_veg: item ? bool(item.is_veg) : true,
     image_url: item?.image_url ?? '',
-    is_active: item?.is_active === undefined ? true : bool(item.is_active),
+    // A dish waiting for a price goes live once it's priced, unless the admin unticks this.
+    is_active: awaitingPrice ? true : item?.is_active === undefined ? true : bool(item.is_active),
+    has_offer: initialOffer !== '',
+    offer_price: initialOffer,
+    offer_ends_at: initialEnds,
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
   const qtyFilled = f.quantity_value.trim() !== '';
   const qtyOk = qtyFilled ? Number(f.quantity_value) > 0 && Number(f.quantity_value) <= 99999.99 && !!f.quantity_unit : !f.quantity_unit;
+  const priceNum = Number(f.price);
+  const priceOk = priceNum > 0;
+  const offerNum = Number(f.offer_price);
+  const offerError = !f.has_offer ? ''
+    : !(offerNum > 0) ? 'Enter the offer price.'
+    : priceOk && offerNum >= priceNum ? 'The offer price must be lower than the normal price.'
+    : f.offer_ends_at && f.offer_ends_at !== initialEnds && new Date(f.offer_ends_at).getTime() <= Date.now() ? 'The offer end must be in the future.'
+    : '';
 
   const save = useAction(async () => {
     const body: Record<string, unknown> = {
-      name: f.name.trim(), description: f.description.trim() || null, price: Number(f.price), is_veg: f.is_veg, image_url: f.image_url || null,
+      name: f.name.trim(), description: f.description.trim() || null, is_veg: f.is_veg, image_url: f.image_url || null,
       // Quantity and unit are set together or cleared together (the backend rejects one alone).
       quantity_value: qtyOk && f.quantity_value ? Number(f.quantity_value) : null,
       quantity_unit: qtyOk && f.quantity_value ? f.quantity_unit : null,
     };
+    if (!item || priceNum !== Number(item.price) || awaitingPrice) body.price = priceNum;
+
+    // Offer: send only what changed. An unchanged end date is left alone (re-sending a past one is refused).
+    if (!f.has_offer) {
+      if (item?.offer_price != null) body.offer_price = null;
+    } else {
+      const endsChanged = f.offer_ends_at !== initialEnds;
+      if (!item || f.offer_price !== initialOffer || endsChanged) body.offer_price = offerNum;
+      if (endsChanged) body.offer_ends_at = f.offer_ends_at ? new Date(f.offer_ends_at).toISOString() : null;
+    }
+
     if (item) {
-      // is_active is only sent when changed, so edits keep working on backends that don't accept it yet.
-      if (f.is_active !== (item.is_active === undefined ? true : bool(item.is_active))) body.is_active = f.is_active;
+      const wasActive = item.is_active === undefined ? true : bool(item.is_active);
+      if (awaitingPrice ? !f.is_active : f.is_active !== wasActive) body.is_active = f.is_active;
       await api.patch(`/items/${item.id}`, body);
     } else {
       await api.post('/items', { ...body, category_id: Number(f.category_id) });
     }
-  }, { success: item ? 'Item saved' : 'Item added', invalidate: ['/admin/items', '/admin/categories'], onDone: onClose });
+  }, {
+    success: !item ? 'Item added' : awaitingPrice ? (f.is_active ? 'Priced and published' : 'Price saved (still hidden)') : 'Item saved',
+    invalidate: ['/admin/items', '/admin/categories'],
+    onDone: onClose,
+  });
 
   function submit(e: FormEvent) { e.preventDefault(); save.mutate(undefined); }
-  const priceOk = Number(f.price) > 0;
 
   return (
     <Modal title={item ? `Edit ${item.name}` : 'New item'} onClose={onClose} footer={<>
       <button className="btn" onClick={onClose}>Cancel</button>
-      <button className="btn primary" form="item-form" disabled={save.isPending || !f.name.trim() || !priceOk || !qtyOk || !f.category_id}>{save.isPending ? 'Saving…' : 'Save'}</button>
+      <button className="btn primary" form="item-form" disabled={save.isPending || !f.name.trim() || !priceOk || !qtyOk || !!offerError || !f.category_id}>
+        {save.isPending ? 'Saving…' : awaitingPrice ? (f.is_active ? 'Set price & publish' : 'Save price') : 'Save'}
+      </button>
     </>}>
       <form id="item-form" className="stack" onSubmit={submit}>
+        {awaitingPrice && (
+          <div className="alert warn">
+            Proposed by <b>{item!.created_by_restaurant_name || 'a kitchen'}</b>. Customers can't see it until you set a price.
+          </div>
+        )}
         <Field label="Category" hint={item ? 'An item can’t move between categories.' : undefined}>
           <select className="select" value={f.category_id} onChange={(e) => set('category_id', e.target.value)} disabled={!!item} required>
             <option value="">Choose…</option>
@@ -137,8 +235,8 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
         <Field label="Name"><input className="input" value={f.name} onChange={(e) => set('name', e.target.value)} required /></Field>
         <Field label="Description"><textarea className="textarea" value={f.description} onChange={(e) => set('description', e.target.value)} /></Field>
         <div className="grid-2">
-          <Field label="Price (₹)">
-            <input className="input" type="number" min="1" step="1" value={f.price} onChange={(e) => set('price', e.target.value)} required />
+          <Field label="Price (₹)" hint="What customers pay. Only admins can set prices.">
+            <input className="input" type="number" min="1" step="1" value={f.price} onChange={(e) => set('price', e.target.value)} required autoFocus={awaitingPrice} />
           </Field>
           <Field label="Type">
             <div className="row" style={{ paddingTop: 6 }}>
@@ -147,6 +245,28 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
             </div>
           </Field>
         </div>
+
+        <div className="offer-box">
+          <label className="check"><input type="checkbox" checked={f.has_offer} onChange={(e) => set('has_offer', e.target.checked)} /> Offer price (discount on this dish)</label>
+          {f.has_offer && (
+            <>
+              <div className="grid-2">
+                <Field label="Offer price (₹)" hint={priceOk && offerNum > 0 && offerNum < priceNum ? `${Math.round((1 - offerNum / priceNum) * 100)}% off ${money(priceNum)}` : 'Lower than the normal price.'}>
+                  <input className="input" type="number" min="1" step="1" value={f.offer_price} onChange={(e) => set('offer_price', e.target.value)} />
+                </Field>
+                <Field label="Offer ends (optional)" hint="Blank = runs until you turn it off.">
+                  <input className="input" type="datetime-local" value={f.offer_ends_at} onChange={(e) => set('offer_ends_at', e.target.value)} />
+                </Field>
+              </div>
+              {item?.offer_price != null && !bool(item.offer_active) && f.offer_ends_at === initialEnds && initialEnds && (
+                <small className="muted">This offer has ended. Set a new end date (or clear it) to run it again.</small>
+              )}
+              <small className="muted">The customer pays the offer price; commission and GST follow it. Coupons still apply on top.</small>
+              {offerError && <small style={{ color: 'var(--red)' }}>{offerError}</small>}
+            </>
+          )}
+        </div>
+
         <div className="grid-2">
           <Field label="Quantity (optional)" hint="Shown to customers next to the dish, e.g. 3 pc or 500 gm.">
             <input className="input" type="number" min="0" step="any" value={f.quantity_value} placeholder="e.g. 500"

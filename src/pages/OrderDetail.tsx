@@ -115,7 +115,10 @@ export default function OrderDetail() {
                             <div className="cell-sub">{it.category_name}{it.portion_label && ` · ${it.portion_label}`}{it.status === 'dropped_unavailable' && ' · unavailable, refunded'}</div>
                           </td>
                           <td className="num">{it.quantity}</td>
-                          <td className="num">{money(it.unit_price)}</td>
+                          <td className="num">
+                            {it.list_price != null && Number(it.list_price) > Number(it.unit_price) && <div className="cell-sub" style={{ textDecoration: 'line-through' }}>{money(it.list_price)}</div>}
+                            {money(it.unit_price)}
+                          </td>
                           <td className="num">{money(it.subtotal)}</td>
                         </tr>
                       ))}

@@ -49,6 +49,8 @@ export interface OrderItem {
   subtotal: Money;
   status: 'confirmed' | 'dropped_unavailable';
   portion_label?: string | null;
+  /** normal price at the time; unit_price is what was charged (lower while an offer ran) */
+  list_price?: Money | null;
 }
 
 export interface LedgerEntry {
@@ -122,11 +124,21 @@ export interface Item {
   category_name?: string;
   name: string;
   description?: string | null;
-  price: Money;
+  /** null while a kitchen-proposed dish is waiting for an admin to price it */
+  price: Money | null;
   image_url?: string | null;
   is_veg?: boolean | number;
   is_active?: boolean | number;
   created_by_type?: 'admin' | 'restaurant';
+  created_by_restaurant_id?: number | null;
+  created_by_restaurant_name?: string | null;
+  awaiting_price?: boolean | number;
+  offer_price?: Money | null;
+  offer_ends_at?: string | null;
+  /** the offer is in force right now */
+  offer_active?: boolean | number;
+  /** what a customer pays per unit right now */
+  effective_price?: Money | null;
   quantity_value?: Money | null;
   quantity_unit?: QuantityUnit | null;
   portion_label?: string | null;
