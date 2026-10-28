@@ -112,7 +112,7 @@ export default function OrderDetail() {
                         <tr key={it.id} style={it.status === 'dropped_unavailable' ? { opacity: 0.55 } : undefined}>
                           <td>
                             <div className="cell-main" style={it.status === 'dropped_unavailable' ? { textDecoration: 'line-through' } : undefined}>{it.item_name || it.name}</div>
-                            <div className="cell-sub">{it.category_name}{it.status === 'dropped_unavailable' && ' · unavailable, refunded'}</div>
+                            <div className="cell-sub">{it.category_name}{it.portion_label && ` · ${it.portion_label}`}{it.status === 'dropped_unavailable' && ' · unavailable, refunded'}</div>
                           </td>
                           <td className="num">{it.quantity}</td>
                           <td className="num">{money(it.unit_price)}</td>

@@ -2,7 +2,15 @@ import { useCan } from '../auth';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Item } from '../api/types';
+import type { Item, QuantityUnit } from '../api/types';
+
+const QUANTITY_UNITS: { value: QuantityUnit; label: string }[] = [
+  { value: 'pc', label: 'pc (pieces)' },
+  { value: 'gm', label: 'gm (grams)' },
+  { value: 'kg', label: 'kg' },
+  { value: 'ml', label: 'ml' },
+  { value: 'ltr', label: 'ltr (litres)' },
+];
 import ImageUpload from '../components/ImageUpload';
 import { Empty, Field, Modal, QueryState, useDebounced, errMsg } from '../components/ui';
 import { useAllCategories } from '../lib/catalog';
@@ -56,7 +64,7 @@ export default function Items() {
                         <div className="row" style={{ flexWrap: 'nowrap' }}>
                           {it.image_url ? <img className="thumb" src={it.image_url} alt="" /> : <div className="thumb" />}
                           <div>
-                            <div className="cell-main"><VegMark veg={bool(it.is_veg)} /> {it.name}</div>
+                            <div className="cell-main"><VegMark veg={bool(it.is_veg)} /> {it.name}{it.portion_label && <span className="badge" style={{ marginLeft: 6 }}>{it.portion_label}</span>}</div>
                             <div className="cell-sub" style={{ maxWidth: 380 }}>{it.description}</div>
                           </div>
                         </div>
@@ -85,15 +93,22 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
     name: item?.name ?? '',
     description: item?.description ?? '',
     price: item ? String(Number(item.price)) : '',
+    quantity_value: item?.quantity_value != null ? String(Number(item.quantity_value)) : '',
+    quantity_unit: (item?.quantity_unit ?? '') as QuantityUnit | '',
     is_veg: item ? bool(item.is_veg) : true,
     image_url: item?.image_url ?? '',
     is_active: item?.is_active === undefined ? true : bool(item.is_active),
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
+  const qtyFilled = f.quantity_value.trim() !== '';
+  const qtyOk = qtyFilled ? Number(f.quantity_value) > 0 && Number(f.quantity_value) <= 99999.99 && !!f.quantity_unit : !f.quantity_unit;
 
   const save = useAction(async () => {
     const body: Record<string, unknown> = {
       name: f.name.trim(), description: f.description.trim() || null, price: Number(f.price), is_veg: f.is_veg, image_url: f.image_url || null,
+      // Quantity and unit are set together or cleared together (the backend rejects one alone).
+      quantity_value: qtyOk && f.quantity_value ? Number(f.quantity_value) : null,
+      quantity_unit: qtyOk && f.quantity_value ? f.quantity_unit : null,
     };
     if (item) {
       // is_active is only sent when changed, so edits keep working on backends that don't accept it yet.
@@ -110,7 +125,7 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
   return (
     <Modal title={item ? `Edit ${item.name}` : 'New item'} onClose={onClose} footer={<>
       <button className="btn" onClick={onClose}>Cancel</button>
-      <button className="btn primary" form="item-form" disabled={save.isPending || !f.name.trim() || !priceOk || !f.category_id}>{save.isPending ? 'Saving…' : 'Save'}</button>
+      <button className="btn primary" form="item-form" disabled={save.isPending || !f.name.trim() || !priceOk || !qtyOk || !f.category_id}>{save.isPending ? 'Saving…' : 'Save'}</button>
     </>}>
       <form id="item-form" className="stack" onSubmit={submit}>
         <Field label="Category" hint={item ? 'An item can’t move between categories.' : undefined}>
@@ -132,6 +147,20 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
             </div>
           </Field>
         </div>
+        <div className="grid-2">
+          <Field label="Quantity (optional)" hint="Shown to customers next to the dish, e.g. 3 pc or 500 gm.">
+            <input className="input" type="number" min="0" step="any" value={f.quantity_value} placeholder="e.g. 500"
+              onChange={(e) => set('quantity_value', e.target.value)} />
+          </Field>
+          <Field label="Unit">
+            <select className="select" value={f.quantity_unit} onChange={(e) => set('quantity_unit', e.target.value as QuantityUnit | '')}>
+              <option value="">Choose…</option>
+              {QUANTITY_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
+            </select>
+          </Field>
+        </div>
+        {!qtyOk && <small style={{ color: 'var(--red)', marginTop: -8 }}>Enter both a quantity above 0 and a unit, or leave both empty.</small>}
+        {qtyOk && f.quantity_value && f.quantity_unit && <small className="muted" style={{ marginTop: -8 }}>Customers will see: <b>{Number(f.quantity_value)} {f.quantity_unit}</b></small>}
         <Field label="Photo"><ImageUpload value={f.image_url} onChange={(u) => set('image_url', u)} /></Field>
         {item && (
           <label className="check"><input type="checkbox" checked={f.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Show this item to customers</label>

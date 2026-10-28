@@ -48,6 +48,7 @@ export interface OrderItem {
   unit_price: Money;
   subtotal: Money;
   status: 'confirmed' | 'dropped_unavailable';
+  portion_label?: string | null;
 }
 
 export interface LedgerEntry {
@@ -126,7 +127,12 @@ export interface Item {
   is_veg?: boolean | number;
   is_active?: boolean | number;
   created_by_type?: 'admin' | 'restaurant';
+  quantity_value?: Money | null;
+  quantity_unit?: QuantityUnit | null;
+  portion_label?: string | null;
 }
+
+export type QuantityUnit = 'pc' | 'gm' | 'kg' | 'ml' | 'ltr';
 
 export interface Restaurant {
   id: number;
