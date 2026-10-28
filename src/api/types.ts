@@ -35,6 +35,8 @@ export interface OrderRow {
   rider_name?: string | null;
   category_names?: string | string[] | null;
   item_count?: number;
+  /** what the rider earns for this delivery, frozen when it was delivered (null before item 8 shipped) */
+  rider_payout?: Money | null;
 }
 
 export interface OrderItem {
@@ -67,6 +69,8 @@ export interface LedgerEntry {
 }
 
 export interface OrderDetail extends OrderRow {
+  rider_payout_breakdown?: RiderPayBreakdown | null;
+  rider_pay_config_id?: number | null;
   cgst_amount?: Money;
   sgst_amount?: Money;
   wallet_used?: Money;
@@ -181,6 +185,8 @@ export interface Rider {
   vehicle_number?: string | null;
   created_at: string;
   cod_outstanding?: Money;
+  /** sums of stored per-order payouts (rider detail only) */
+  payouts?: { deliveries: number; total_earned: Money; unsettled: Money };
   unsettled_deliveries?: number;
   last_active_at?: string | null;
   ledger?: LedgerEntry[];
@@ -290,4 +296,83 @@ export interface OwnerDocuments {
   documents: Partial<Record<DocType, PartnerDocument | null>>;
   summary: DocumentSummary;
   history: PartnerDocument[];
+}
+
+export interface RiderPayBreakdown {
+  formula?: string;
+  distance_km: number;
+  base_payout: Money;
+  per_km_rate: Money;
+  distance_pay: Money;
+  subtotal: Money;
+  min_payout: Money;
+  min_applied: boolean;
+  incentive_per_delivery: Money;
+  payout: Money;
+  config_id?: number;
+}
+
+export interface RiderPaySettings {
+  id: number;
+  base_payout: Money;
+  per_km_rate: Money;
+  min_payout: Money;
+  incentive_per_delivery: Money;
+  created_at: string;
+  created_by_admin_id: number | null;
+  created_by_admin_name?: string | null;
+}
+
+export interface CashHandover {
+  id: number;
+  rider_id: number;
+  rider_name?: string | null;
+  amount: Money;
+  received_at: string;
+  reference: string | null;
+  notes: string | null;
+  received_by_admin_id: number | null;
+  received_by_admin_name?: string | null;
+  balance_after: Money;
+  outstanding_after?: Money;
+  created_at: string;
+}
+
+export interface CodRiderRow {
+  rider_id: number;
+  rider_name: string | null;
+  rider_phone: string | null;
+  delivered_cod_orders: number;
+  expected: Money;
+  collected: Money;
+  difference: Money;
+  flagged_orders: number;
+  handed_over: Money;
+  net_cash_in_period: Money;
+  outstanding: Money;
+}
+
+export interface CodOrderRow {
+  order_id: number;
+  status: 'delivered' | 'cancelled';
+  payment_status: string;
+  rider_id: number | null;
+  rider_name: string | null;
+  closed_at: string | null;
+  grand_total: Money;
+  expected: Money;
+  collected: Money;
+  difference: Money;
+  refunded: Money;
+  flag: 'short' | 'excess' | 'unexpected_collection' | null;
+}
+
+export interface CodReconciliation {
+  range: { from: string | null; to: string | null };
+  totals: Record<string, Money | number>;
+  riders: CodRiderRow[];
+  orders: CodOrderRow[];
+  page: number;
+  limit: number;
+  total_orders: number;
 }

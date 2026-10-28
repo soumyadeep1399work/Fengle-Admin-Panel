@@ -3,9 +3,11 @@ import type { OrderRow } from '../api/types';
 import { ago, categoryList, money, PAYMENT_LABEL } from '../lib/format';
 import { Empty, StatusBadge } from './ui';
 
-export default function OrdersTable({ orders, hide = [] }: {
+export default function OrdersTable({ orders, hide = [], showRiderPay }: {
   orders: OrderRow[];
   hide?: ('customer' | 'restaurant' | 'rider')[];
+  /** adds a "Rider pay" column (the payout frozen at delivery) */
+  showRiderPay?: boolean;
 }) {
   const nav = useNavigate();
   if (orders.length === 0) return <Empty title="No orders" />;
@@ -22,6 +24,7 @@ export default function OrdersTable({ orders, hide = [] }: {
             {!hide.includes('rider') && <th>Rider</th>}
             <th>Payment</th>
             <th className="num">Total</th>
+            {showRiderPay && <th className="num">Rider pay</th>}
           </tr>
         </thead>
         <tbody>
@@ -49,6 +52,7 @@ export default function OrdersTable({ orders, hide = [] }: {
                 <div className="cell-sub"><StatusBadge status={o.payment_status} /></div>
               </td>
               <td className="num cell-main">{money(o.grand_total)}</td>
+              {showRiderPay && <td className="num">{o.rider_payout != null ? money(o.rider_payout) : <span className="muted">—</span>}</td>}
             </tr>
           ))}
         </tbody>

@@ -63,7 +63,7 @@ export const PAYMENT_LABEL: Record<string, string> = {
 
 export const LEDGER_REASON: Record<string, string> = {
   cod_collected: 'COD collected', settlement_payout: 'Settlement payout', settlement_deduction: 'COD netted',
-  order_refund: 'Order refund', manual_adjustment: 'Manual adjustment',
+  order_refund: 'Order refund', manual_adjustment: 'Manual adjustment', cash_handover: 'Cash handed over',
 };
 
 export function bool(v: boolean | number | null | undefined): boolean {

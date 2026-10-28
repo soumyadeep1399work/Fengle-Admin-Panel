@@ -38,6 +38,8 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
     { to: '/restaurants', label: 'Restaurants', icon: I.kitchen },
     { to: '/riders', label: 'Riders', icon: I.rider },
     { to: '/settlements', label: 'Settlements', icon: I.settle },
+    { to: '/cod', label: 'COD cash', icon: I.settle },
+    { to: '/rider-pay', label: 'Rider pay', icon: I.rider },
     { to: '/documents', label: 'Documents', icon: I.docs },
   ] },
   { label: 'Catalog', links: [

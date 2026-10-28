@@ -24,6 +24,7 @@ export function normalizeRider(row: Obj, res: Obj = {}): Rider {
     unsettled_deliveries: (row.unsettled_deliveries ?? row.unsettled_delivery_count) as number | undefined,
     ledger: (res.ledger ?? res.wallet_ledger ?? row.ledger) as LedgerEntry[] | undefined,
     orders: (res.orders ?? row.orders) as Rider['orders'],
+    payouts: (res.payouts ?? row.payouts) as Rider['payouts'],
   } as Rider;
 }
 

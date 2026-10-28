@@ -243,3 +243,5 @@ hr.sep { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
 .addr-result:hover { background: var(--primary-tint-2); }
 
 .offer-box { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; background: #fdfbf8; }
+
+.formula { background: var(--primary-tint-2); border-radius: 10px; padding: 10px 12px; font-size: 13px; }

@@ -10,6 +10,7 @@ import PartnerDocumentsCard from '../components/PartnerDocuments';
 import LedgerTable from '../components/LedgerTable';
 import OrdersTable from '../components/OrdersTable';
 import SettleRider from '../components/SettleRider';
+import CashHandover from '../components/CashHandover';
 import { Confirm, QueryState, StatusBadge, Tabs } from '../components/ui';
 import { useAction } from '../lib/hooks';
 import { dateTime, money, num } from '../lib/format';
@@ -34,6 +35,7 @@ export default function RiderDetail() {
   const can = useCan();
   const [tab, setTab] = useState<'orders' | 'ledger'>('orders');
   const [settling, setSettling] = useState(false);
+  const [handover, setHandover] = useState(false);
   const [statusTo, setStatusTo] = useState<PartnerStatus | null>(null);
 
   const setStatus = useAction((s: PartnerStatus) => api.patch(`/admin/riders/${id}`, { status: s }), {
@@ -50,6 +52,7 @@ export default function RiderDetail() {
         </div>
         {r && (
           <div className="row">
+            {can('manage') && <button className="btn" onClick={() => setHandover(true)}>Record cash received</button>}
             {can('money') && <button className="btn primary" onClick={() => setSettling(true)}>Run settlement</button>}
             {can('manage') && (r.status === 'active'
               ? <button className="btn danger" onClick={() => setStatusTo('suspended')}>Suspend</button>
@@ -68,7 +71,7 @@ export default function RiderDetail() {
                 <div className="sub">{Number(r.wallet_balance) < 0 ? 'Owes Fengle COD cash' : 'Earnings net of COD'}</div>
               </div>
               <div className="card stat"><div className="label">COD held</div><div className="value">{r.cod_outstanding !== undefined ? money(r.cod_outstanding) : '—'}</div></div>
-              <div className="card stat"><div className="label">Unsettled deliveries</div><div className="value">{r.unsettled_deliveries !== undefined ? num(r.unsettled_deliveries) : '—'}</div></div>
+              <div className="card stat"><div className="label">Unsettled deliveries</div><div className="value">{r.unsettled_deliveries !== undefined ? num(r.unsettled_deliveries) : '—'}</div>{r.payouts && <div className="sub">{money(r.payouts.unsettled)} to pay · {money(r.payouts.total_earned)} earned in all</div>}</div>
               <div className="card stat"><div className="label">Vehicle</div><div className="value" style={{ fontSize: 18 }}>{r.vehicle_type || '—'}</div><div className="sub">{r.vehicle_number}</div></div>
             </div>
 
@@ -81,7 +84,7 @@ export default function RiderDetail() {
                 { value: 'ledger', label: 'Wallet ledger', count: r.ledger?.length },
               ]} />
               {tab === 'orders' && (r.orders
-                ? <OrdersTable orders={r.orders} hide={['rider']} />
+                ? <OrdersTable orders={r.orders} hide={['rider']} showRiderPay />
                 : <div className="empty">Delivery history appears once the rider detail endpoint is live.</div>)}
               {tab === 'ledger' && (r.ledger
                 ? <LedgerTable entries={r.ledger} />
@@ -92,6 +95,7 @@ export default function RiderDetail() {
       </QueryState>
 
       {settling && r && <SettleRider rider={r} onClose={() => setSettling(false)} />}
+      {handover && r && <CashHandover rider={r} onClose={() => setHandover(false)} />}
       {statusTo && r && (
         <Confirm title={statusTo === 'suspended' ? `Suspend ${r.name || 'this rider'}?` : `Reactivate ${r.name || 'this rider'}?`}
           danger={statusTo === 'suspended'} confirmLabel={statusTo === 'suspended' ? 'Suspend' : 'Reactivate'}

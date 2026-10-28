@@ -96,6 +96,11 @@ export default function OrderDetail() {
                     <Link to={`/riders/${o.rider_id}`} className="cell-main">{o.rider?.name || o.rider_name || `Rider #${o.rider_id}`}</Link>
                     {o.rider?.phone && <div>{o.rider.phone}</div>}
                     {o.eta_minutes != null && <div className="muted small">ETA set at pickup: {o.eta_minutes} min</div>}
+                    {o.rider_payout != null && (
+                      <div className="small">Rider earns <b>{money(o.rider_payout)}</b>
+                        {o.rider_payout_breakdown && <div className="muted">{Number(o.rider_payout_breakdown.distance_km).toFixed(1)} km · base {money(o.rider_payout_breakdown.base_payout)} + {money(o.rider_payout_breakdown.per_km_rate)}/km{o.rider_payout_breakdown.min_applied ? ' · minimum applied' : ''}{Number(o.rider_payout_breakdown.incentive_per_delivery) > 0 ? ` · +${money(o.rider_payout_breakdown.incentive_per_delivery)} incentive` : ''}</div>}
+                      </div>
+                    )}
                   </>
                 ) : <div className="muted">No rider assigned</div>}
               </div>
