@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { api, download } from '../api/client';
 import type { CashHandover, CodReconciliation, Rider } from '../api/types';
 import { Empty, Pager, QueryState, Tabs, errMsg, useToast } from '../components/ui';
-import { useList } from '../lib/hooks';
 import { date, dateTime, money, num } from '../lib/format';
 
 const LIMIT = 50;
@@ -42,8 +41,13 @@ export default function CodCash() {
     queryFn: () => api.get<CodReconciliation>('/admin/cod/reconciliation', { ...filters, flagged: flagged || undefined, page, limit: LIMIT }),
     enabled: tab === 'reconciliation',
   });
-  const handovers = useList<CashHandover>('/admin/cash-handovers', 'handovers', { ...filters, page, limit: LIMIT });
-  const handoverTotal = (handovers.data as unknown as { total_amount?: number } | undefined)?.total_amount;
+  const handoverQ = useQuery({
+    queryKey: ['/admin/cash-handovers', filters, page],
+    queryFn: () => api.get<{ handovers: CashHandover[]; total: number; total_amount: number }>('/admin/cash-handovers', { ...filters, page, limit: LIMIT }),
+    enabled: tab === 'handovers',
+  });
+  const handovers = { ...handoverQ, data: handoverQ.data ? { rows: handoverQ.data.handovers, total: handoverQ.data.total } : undefined };
+  const handoverTotal = handoverQ.data?.total_amount;
 
   async function exportCsv(view: 'orders' | 'riders') {
     try {
