@@ -19,7 +19,7 @@ import Campaigns from './pages/Campaigns';
 import Coupons from './pages/Coupons';
 import Admins from './pages/Admins';
 import Documents from './pages/Documents';
-import RiderPay from './pages/RiderPay';
+import Shipping from './pages/Shipping';
 import CodCash from './pages/CodCash';
 import Finance from './pages/Finance';
 import Notifications from './pages/Notifications';
@@ -46,7 +46,8 @@ export default function App() {
         <Route path="riders/:id" element={<RiderDetail />} />
         <Route path="settlements" element={<Settlements />} />
         <Route path="documents" element={<Documents />} />
-        <Route path="rider-pay" element={<RiderPay />} />
+        <Route path="rider-pay" element={<Navigate to="/shipping" replace />} />
+        <Route path="shipping" element={<Shipping />} />
         <Route path="cod" element={<CodCash />} />
         <Route path="finance" element={can('money') ? <Finance /> : home} />
         <Route path="profit-per-dish" element={can('money') ? <ProductProfit /> : home} />

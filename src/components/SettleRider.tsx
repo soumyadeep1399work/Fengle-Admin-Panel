@@ -22,7 +22,7 @@ export default function SettleRider({ rider, onClose }: { rider: Rider; onClose:
             {rider.cod_outstanding !== undefined && <> (<b>{money(rider.cod_outstanding)}</b>)</>}. It can't be undone.
           </div>
           <div className="muted small">
-            Each delivery pays what was worked out when it was delivered, using the <Link to="/rider-pay">rider pay settings</Link> in force then.
+            Each delivery pays what was worked out when it was delivered, using the <Link to="/shipping">shipping charge rules</Link> in force then.
             Deliveries from before those settings existed use today's settings.
           </div>
         </div>

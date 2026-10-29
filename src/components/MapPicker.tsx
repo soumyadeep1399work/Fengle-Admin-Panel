@@ -79,8 +79,10 @@ function AddressSearch({ onPick }: { onPick: (p: Place) => void }) {
   );
 }
 
-export default function MapPicker({ lat, lng, radiusKm, onChange, onAddressFound, readOnly }: {
+export default function MapPicker({ lat, lng, radiusKm, onChange, onAddressFound, readOnly, hint }: {
   lat: number | null; lng: number | null; radiusKm?: number;
+  /** Replaces the default "drop the kitchen pin" caption when the map is used for something else. */
+  hint?: string;
   onChange?: (lat: number, lng: number) => void;
   /** Called with the full address text when the pin is set from a search result. */
   onAddressFound?: (address: string) => void;
@@ -116,7 +118,7 @@ export default function MapPicker({ lat, lng, radiusKm, onChange, onAddressFound
       <div className="row between small">
         <span className="muted">
           {editable
-            ? <>Search, or click the map to drop the kitchen pin exactly on the building{radiusKm ? `. The shaded circle is the ${radiusKm} km delivery radius` : ''}.</>
+            ? hint ?? <>Search, or click the map to drop the kitchen pin exactly on the building{radiusKm ? `. The shaded circle is the ${radiusKm} km delivery radius` : ''}.</>
             : has ? <span className="mono">{lat!.toFixed(6)}, {lng!.toFixed(6)}</span> : 'No location set'}
         </span>
         {has && <a href={googleMapsLink(lat!, lng!)} target="_blank" rel="noreferrer">Check in Google Maps ↗</a>}

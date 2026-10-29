@@ -206,6 +206,32 @@ export interface Rider {
   documents?: DocumentSummary;
   verificationStatus?: VerificationStatus;
   verificationDeniedReason?: string | null;
+  /** List rows: did the rider add payout details? */
+  has_bank_account?: boolean;
+  /** Detail only. `account_number` (the full number) is sent to super_admin and ops, never to support. */
+  bank_account?: RiderBankAccount | null;
+  bank_account_history?: RiderBankHistoryRow[];
+}
+
+export interface RiderBankAccount {
+  account_holder_name: string;
+  account_number?: string | null;
+  /** True when the server's encryption key was lost, so the full number can't be shown. */
+  account_number_unavailable?: boolean;
+  account_number_last4: string;
+  ifsc: string;
+  bank_name?: string | null;
+  upi_id?: string | null;
+  updated_at?: string | null;
+}
+
+export interface RiderBankHistoryRow {
+  id: number;
+  action: 'create' | 'update';
+  before: Pick<RiderBankAccount, 'account_holder_name' | 'account_number_last4' | 'ifsc' | 'upi_id'> | null;
+  after: Pick<RiderBankAccount, 'account_holder_name' | 'account_number_last4' | 'ifsc' | 'upi_id'> | null;
+  changed_by?: string;
+  created_at: string;
 }
 
 export interface Customer {
@@ -422,4 +448,81 @@ export interface RestaurantStatement {
   page: number; limit: number; total_orders: number;
   payments: RestaurantPayment[];
   adjustments: RestaurantAdjustment[];
+}
+
+/* ---------- Shipping charges (zones + rules; one engine for the customer fee and rider pay) ---------- */
+export type ShippingKind = 'customer_fee' | 'rider_pay';
+export type ShippingRuleType = 'base' | 'add' | 'free' | 'min' | 'max';
+
+export interface ShippingCircle { lat: number; lng: number; radius_km: number }
+
+export interface ShippingZone {
+  id: number;
+  name: string;
+  is_active: boolean | number;
+  priority: number;
+  /** v1 zones are circles around the drop-off; `pincodes` is accepted by the API but nothing sends one yet. */
+  match: { pincodes?: string[]; circles?: ShippingCircle[] };
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ShippingBand { from_km: number; to_km: number | null; per_km: number }
+
+export interface ShippingConditions {
+  distance_km?: { min?: number; max?: number };
+  order_value?: { min?: number; max?: number };
+  time?: { days?: number[]; from?: string; to?: string };
+}
+
+export interface ShippingCharge {
+  flat?: number;
+  bands?: ShippingBand[];
+  /** customer_fee base rules only: count distance only beyond the kitchen's own radius. */
+  after_kitchen_radius?: boolean;
+  percent?: number;
+  amount?: number;
+}
+
+export interface ShippingRule {
+  id: number;
+  kind: ShippingKind;
+  zone_id: number | null;
+  zone_name?: string | null;
+  name: string;
+  is_active: boolean | number;
+  priority: number;
+  type: ShippingRuleType;
+  conditions: ShippingConditions | null;
+  charge: ShippingCharge;
+  valid_from: string | null;
+  valid_to: string | null;
+  /** Active, and inside its dates, right now. */
+  is_in_effect_now?: boolean;
+  /** The one rule the "every delivery can be priced" safeguard protects — it can't be switched off or deleted. */
+  is_last_everywhere_base?: boolean;
+  created_by_admin_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ShippingHistoryRow {
+  id: number;
+  entity: 'rule' | 'zone';
+  entity_id: number;
+  kind: ShippingKind | null;
+  action: 'create' | 'update' | 'delete' | 'reorder';
+  before: unknown;
+  after: unknown;
+  admin_id: number | null;
+  admin_name: string | null;
+  created_at: string;
+}
+
+export interface ShippingPreview {
+  amount: Money;
+  zone: { id: number; name: string } | null;
+  applied: { rule_id: number; name: string; type: ShippingRuleType; effect: { before: number; after: number; delta: number } }[];
+  breakdown: { distance_km?: number; chargeable_km?: number; base_amount?: number; steps?: unknown[] };
+  warnings?: string[];
 }
