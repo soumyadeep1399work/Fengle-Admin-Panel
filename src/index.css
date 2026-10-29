@@ -251,3 +251,10 @@ hr.sep { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
 .pnl-line.strong { font-weight: 800; color: var(--ink); border-bottom: 1px solid var(--border-strong); font-size: 15px; }
 .pnl-line.info { color: var(--body); }
 .tbl tr.total-row td { font-weight: 800; color: var(--ink); background: #fdfbf8; border-top: 2px solid var(--border-strong); }
+
+/* ---------- Notification preview ---------- */
+.phone-preview { background: #1b1418; border-radius: 18px; padding: 14px; color: #fff; display: flex; flex-direction: column; gap: 4px; align-self: stretch; min-height: 120px; }
+.pp-app { font-size: 11px; opacity: 0.7; display: flex; align-items: center; gap: 6px; }
+.pp-dot { width: 14px; height: 14px; border-radius: 4px; background: var(--primary-mid); display: inline-block; }
+.pp-title { font-weight: 800; font-size: 14px; overflow-wrap: anywhere; }
+.pp-body { font-size: 13px; opacity: 0.9; white-space: pre-wrap; overflow-wrap: anywhere; }

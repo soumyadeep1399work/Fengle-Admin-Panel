@@ -19,6 +19,7 @@ const I = {
   admins: 'M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3zM9.5 12l2 2 3.5-4',
   docs: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
   finance: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  bell: 'M6 8a6 6 0 1112 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 003.4 0',
   promo: 'M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15 8a5 5 0 010 8M18 5a9 9 0 010 14',
 };
 
@@ -51,6 +52,7 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
     { to: '/customers', label: 'Customers', icon: I.users },
     { to: '/campaigns', label: 'Campaign audience', icon: I.promo, perm: 'money' },
     { to: '/coupons', label: 'Coupons', icon: I.coupon },
+    { to: '/notifications', label: 'Notifications', icon: I.bell, perm: 'money' },
   ] },
   { label: 'Finance', links: [
     { to: '/finance', label: 'Profit & loss', icon: I.finance, perm: 'money' },

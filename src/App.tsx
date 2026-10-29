@@ -22,6 +22,7 @@ import Documents from './pages/Documents';
 import RiderPay from './pages/RiderPay';
 import CodCash from './pages/CodCash';
 import Finance from './pages/Finance';
+import Notifications from './pages/Notifications';
 
 export default function App() {
   const { admin, booting } = useAuth();
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="campaigns" element={can('money') ? <Campaigns /> : home} />
         <Route path="coupons" element={<Coupons />} />
+        <Route path="notifications" element={can('money') ? <Notifications /> : home} />
         <Route path="admins" element={can('admins') ? <Admins /> : home} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
