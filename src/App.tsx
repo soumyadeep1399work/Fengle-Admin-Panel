@@ -21,6 +21,7 @@ import Admins from './pages/Admins';
 import Documents from './pages/Documents';
 import RiderPay from './pages/RiderPay';
 import CodCash from './pages/CodCash';
+import Finance from './pages/Finance';
 
 export default function App() {
   const { admin, booting } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="documents" element={<Documents />} />
         <Route path="rider-pay" element={<RiderPay />} />
         <Route path="cod" element={<CodCash />} />
+        <Route path="finance" element={can('money') ? <Finance /> : home} />
         <Route path="categories" element={<Categories />} />
         <Route path="items" element={<Items />} />
         <Route path="customers" element={<Customers />} />
