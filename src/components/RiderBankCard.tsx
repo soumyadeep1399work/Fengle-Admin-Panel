@@ -33,8 +33,16 @@ function Line({ label, children, copy }: { label: string; children: React.ReactN
   );
 }
 
-/** Where a rider's weekly payout goes: the account they added in the Rider app, with who-changed-what history. */
-export default function RiderBankCard({ account, history }: { account: RiderBankAccount | null | undefined; history: RiderBankHistoryRow[] | undefined }) {
+const WORDS = {
+  rider: { who: 'rider', app: 'Rider app', payout: 'weekly payout' },
+  kitchen: { who: 'kitchen', app: 'Restaurant app', payout: 'payment' },
+};
+
+/** Where a partner's payouts go: the account they added in their own app, with who-changed-what history. Same shape for riders and kitchens. */
+export default function RiderBankCard({ account, history, partner = 'rider' }: {
+  account: RiderBankAccount | null | undefined; history: RiderBankHistoryRow[] | undefined; partner?: 'rider' | 'kitchen';
+}) {
+  const w = WORDS[partner];
   const [showHistory, setShowHistory] = useState(false);
   const [now] = useState(() => Date.now());
 
@@ -47,7 +55,7 @@ export default function RiderBankCard({ account, history }: { account: RiderBank
           <h3 style={{ margin: 0 }}>Payout account</h3>
           <Badge tone="gold" dot>Not added</Badge>
         </div>
-        <p className="muted small" style={{ marginBottom: 0 }}>This rider hasn’t added bank details in the Rider app yet, so there is nowhere to send their weekly payout.</p>
+        <p className="muted small" style={{ marginBottom: 0 }}>This {w.who} hasn’t added bank details in the {w.app} yet, so there is nowhere to send their {w.payout}.</p>
       </div>
     );
   }
@@ -63,7 +71,7 @@ export default function RiderBankCard({ account, history }: { account: RiderBank
         {recentChange ? <Badge tone="gold" dot>Changed {ago(recentChange.created_at)}</Badge> : <Badge tone="green" dot>Added</Badge>}
       </div>
       {recentChange && (
-        <div className="alert warn">The rider changed this payout account {ago(recentChange.created_at)}. Confirm with them before sending the next payout.</div>
+        <div className="alert warn">The {w.who} changed this payout account {ago(recentChange.created_at)}. Confirm with them before sending the next {w.payout}.</div>
       )}
       <div>
         <Line label="Account holder" copy={account.account_holder_name}>{account.account_holder_name}</Line>
@@ -72,7 +80,7 @@ export default function RiderBankCard({ account, history }: { account: RiderBank
         {account.upi_id && <Line label="UPI ID" copy={account.upi_id}>{account.upi_id}</Line>}
       </div>
       {account.account_number_unavailable
-        ? <div className="alert error">The full account number can’t be read (the server’s encryption key is missing). Ask the rider to save their bank details again.</div>
+        ? <div className="alert error">The full account number can’t be read (the server’s encryption key is missing). Ask the {w.who} to save their bank details again.</div>
         : !full && <small className="muted">The full account number is visible to Operations and Super admin only.</small>}
       <small className="muted">Last updated {dateTime(account.updated_at)}</small>
 

@@ -39,6 +39,8 @@ export function normalizeRestaurant(res: Obj): Restaurant {
     order_count: (res.order_count ?? r.order_count) as number | undefined,
     rating_avg: (rating?.avg ?? res.rating_avg ?? r.rating_avg) as Restaurant['rating_avg'],
     commission_history: (res.commission_history ?? res.commission_config_history ?? r.commission_history) as Restaurant['commission_history'],
+    bank_account: (res.bank_account ?? r.bank_account) as Restaurant['bank_account'],
+    bank_account_history: (res.bank_account_history ?? r.bank_account_history) as Restaurant['bank_account_history'],
   } as Restaurant;
 }
 

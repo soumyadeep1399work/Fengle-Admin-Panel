@@ -161,6 +161,9 @@ export type QuantityUnit = 'pc' | 'gm' | 'kg' | 'ml' | 'ltr';
 
 export interface Restaurant {
   id: number;
+  has_bank_account?: boolean;
+  bank_account?: RiderBankAccount | null;
+  bank_account_history?: RiderBankHistoryRow[];
   name: string;
   owner_name?: string | null;
   phone: string;

@@ -7,6 +7,7 @@ import type { OrderRow, PartnerStatus, Restaurant } from '../api/types';
 import { normalizeRestaurant } from '../api/normalize';
 import AgreementSelfie from '../components/AgreementSelfie';
 import PartnerDocumentsCard from '../components/PartnerDocuments';
+import RiderBankCard from '../components/RiderBankCard';
 import MapPicker from '../components/MapPicker';
 import OrdersTable from '../components/OrdersTable';
 import RestaurantForm from '../components/RestaurantForm';
@@ -112,6 +113,7 @@ export default function RestaurantDetail() {
 
               <div className="stack">
                 <PartnerDocumentsCard ownerType="restaurant" id={r.id} />
+                <RiderBankCard partner="kitchen" account={r.bank_account} history={r.bank_account_history} />
                 <AgreementSelfie kind="restaurants" id={r.id} hasSelfie={r.hasAgreementSelfie} acceptedAt={r.agreementAcceptedAt} version={r.agreementVersion} verificationStatus={r.verificationStatus} deniedReason={r.verificationDeniedReason} />
                 <div className="card">
                   <div className="card-head"><h3>Categories</h3><span className="muted small">{carried.length} carried</span></div>
