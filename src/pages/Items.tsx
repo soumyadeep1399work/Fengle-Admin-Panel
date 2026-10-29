@@ -17,7 +17,7 @@ const QUANTITY_UNITS: { value: QuantityUnit; label: string }[] = [
   { value: 'ltr', label: 'ltr (litres)' },
 ];
 
-type View = 'all' | 'awaiting' | 'hidden';
+type View = 'all' | 'awaiting' | 'nocost' | 'hidden';
 
 function VegMark({ veg }: { veg: boolean }) {
   const c = veg ? 'var(--green)' : 'var(--red)';
@@ -61,6 +61,7 @@ export default function Items() {
     category_id: categoryId || undefined,
     q: dq || undefined,
     awaiting_price: view === 'awaiting' ? 1 : undefined,
+    missing_vendor_cost: view === 'nocost' ? 1 : undefined,
     is_active: view === 'hidden' ? 0 : undefined,
     limit: 500,
   });
@@ -68,6 +69,8 @@ export default function Items() {
   const awaiting = useList<Item>('/admin/items', 'items', { awaiting_price: 1, limit: 500 });
   const awaitingCount = awaiting.data?.total ?? awaiting.data?.rows.length;
   const catName = (id: number) => cats.data?.find((c) => c.id === id)?.name ?? `#${id}`;
+  // vendor_cost is only sent to super_admin/ops; Support never sees costs or margins.
+  const showCost = (data?.rows ?? []).some((it) => 'vendor_cost' in it) || view === 'nocost';
   const setParam = (k: string, v: string) => {
     const n = new URLSearchParams(params);
     if (v) n.set(k, v); else n.delete(k);
@@ -87,6 +90,7 @@ export default function Items() {
         <Tabs value={view} onChange={(v) => setParam('view', v === 'all' ? '' : v)} tabs={[
           { value: 'all', label: 'All' },
           { value: 'awaiting', label: 'Waiting for price', count: awaitingCount },
+          { value: 'nocost', label: 'Missing vendor cost' },
           { value: 'hidden', label: 'Hidden' },
         ]} />
         <div className="toolbar">
@@ -98,11 +102,11 @@ export default function Items() {
         </div>
         <QueryState isLoading={isLoading} error={error}>
           {(data?.rows.length ?? 0) === 0 ? (
-            <Empty title={view === 'awaiting' ? 'No dishes waiting for a price' : 'No items'} />
+            <Empty title={view === 'awaiting' ? 'No dishes waiting for a price' : view === 'nocost' ? 'Every dish has a vendor cost' : 'No items'} />
           ) : (
             <div className="table-wrap">
               <table className="tbl">
-                <thead><tr><th>Item</th><th>Category</th><th>Added by</th><th>Status</th><th className="num">Price</th></tr></thead>
+                <thead><tr><th>Item</th><th>Category</th><th>Added by</th><th>Status</th><th className="num">Price</th>{showCost && <th className="num">Vendor cost · margin</th>}</tr></thead>
                 <tbody>
                   {data!.rows.map((it) => (
                     <tr key={it.id} className={can('manage') ? 'clickable' : undefined} onClick={can('manage') ? () => setEditing(it) : undefined}>
@@ -126,6 +130,16 @@ export default function Items() {
                           : it.is_active === undefined || bool(it.is_active) ? <span className="badge green">Active</span> : <span className="badge">Hidden</span>}
                       </td>
                       <td className="num"><PriceCell it={it} /></td>
+                      {showCost && (
+                        <td className="num">
+                          {it.vendor_cost == null ? <span className="badge gold">Not set</span> : (
+                            <>
+                              <div>{money(it.vendor_cost)}</div>
+                              {it.margin != null && <div className="cell-sub" style={{ color: Number(it.margin) < 0 ? 'var(--red)' : 'var(--green)' }}>{money(it.margin)}{it.margin_percent != null ? ` · ${Number(it.margin_percent).toFixed(0)}%` : ''}</div>}
+                            </>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -164,6 +178,7 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
     image_url: item?.image_url ?? '',
     // A dish waiting for a price goes live once it's priced, unless the admin unticks this.
     is_active: awaitingPrice ? true : item?.is_active === undefined ? true : bool(item.is_active),
+    vendor_cost: item?.vendor_cost != null ? String(Number(item.vendor_cost)) : '',
     has_offer: initialOffer !== '',
     offer_price: initialOffer,
     offer_ends_at: initialEnds,
@@ -188,6 +203,8 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
       quantity_unit: qtyOk && f.quantity_value ? f.quantity_unit : null,
     };
     if (!item || priceNum !== Number(item.price) || awaitingPrice) body.price = priceNum;
+    const initialCost = item?.vendor_cost != null ? String(Number(item.vendor_cost)) : '';
+    if (f.vendor_cost !== initialCost) body.vendor_cost = f.vendor_cost === '' ? null : Number(f.vendor_cost);
 
     // Offer: send only what changed. An unchanged end date is left alone (re-sending a past one is refused).
     if (!f.has_offer) {
@@ -246,6 +263,19 @@ function ItemForm({ item, defaultCategory, onClose }: { item?: Item; defaultCate
           </Field>
         </div>
 
+        <Field label="Vendor cost (₹, internal)" hint="What Fengle pays the kitchen for one of this dish. Never shown to customers or kitchens.">
+          <input className="input" type="number" min="0" step="0.01" value={f.vendor_cost} placeholder="e.g. 200" onChange={(e) => set('vendor_cost', e.target.value)} />
+        </Field>
+        {f.vendor_cost !== '' && priceOk && (() => {
+          const charged = f.has_offer && offerNum > 0 && offerNum < priceNum ? offerNum : priceNum;
+          const m = charged - Number(f.vendor_cost);
+          return (
+            <small style={{ marginTop: -8, color: m < 0 ? 'var(--red)' : 'var(--green)' }}>
+              {m < 0 ? 'Loss' : 'Profit'} per dish: <b>{money(Math.abs(m))}</b> ({charged > 0 ? Math.round((m / charged) * 100) : 0}% of {money(charged)}{charged !== priceNum ? ', offer price' : ''}).
+              {m < 0 && ' The vendor cost is above what the customer pays.'}
+            </small>
+          );
+        })()}
         <div className="offer-box">
           <label className="check"><input type="checkbox" checked={f.has_offer} onChange={(e) => set('has_offer', e.target.checked)} /> Offer price (discount on this dish)</label>
           {f.has_offer && (

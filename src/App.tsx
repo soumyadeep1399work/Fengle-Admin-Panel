@@ -23,6 +23,8 @@ import RiderPay from './pages/RiderPay';
 import CodCash from './pages/CodCash';
 import Finance from './pages/Finance';
 import Notifications from './pages/Notifications';
+import RestaurantSettlements, { RestaurantStatementPage } from './pages/RestaurantSettlements';
+import ProductProfit from './pages/ProductProfit';
 
 export default function App() {
   const { admin, booting } = useAuth();
@@ -38,6 +40,8 @@ export default function App() {
         <Route path="orders/:id" element={<OrderDetail />} />
         <Route path="restaurants" element={<Restaurants />} />
         <Route path="restaurants/:id" element={<RestaurantDetail />} />
+        <Route path="restaurants/:id/settlement" element={can('manage') ? <RestaurantStatementPage /> : home} />
+        <Route path="restaurant-settlements" element={can('manage') ? <RestaurantSettlements /> : home} />
         <Route path="riders" element={<Riders />} />
         <Route path="riders/:id" element={<RiderDetail />} />
         <Route path="settlements" element={<Settlements />} />
@@ -45,6 +49,7 @@ export default function App() {
         <Route path="rider-pay" element={<RiderPay />} />
         <Route path="cod" element={<CodCash />} />
         <Route path="finance" element={can('money') ? <Finance /> : home} />
+        <Route path="profit-per-dish" element={can('money') ? <ProductProfit /> : home} />
         <Route path="categories" element={<Categories />} />
         <Route path="items" element={<Items />} />
         <Route path="customers" element={<Customers />} />

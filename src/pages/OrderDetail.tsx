@@ -88,6 +88,9 @@ export default function OrderDetail() {
                   </>
                 ) : <div className="muted">Not routed yet</div>}
                 {!!o.cascade_attempts && o.cascade_attempts > 1 && <div className="badge gold">Cascaded {o.cascade_attempts}×</div>}
+                {o.restaurant_payable != null && (
+                  <div className="small">Fengle owes the kitchen <b>{money(o.restaurant_payable)}</b>{(o.payable_estimated === true || o.payable_estimated === 1) && <span className="badge gold" style={{ marginLeft: 6 }}>Estimated</span>}</div>
+                )}
               </div>
               <div className="card card-pad stack" style={{ gap: 8 }}>
                 <h3>Rider</h3>

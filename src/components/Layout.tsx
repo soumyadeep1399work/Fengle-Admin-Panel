@@ -38,6 +38,7 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
   ] },
   { label: 'Partners', links: [
     { to: '/restaurants', label: 'Restaurants', icon: I.kitchen },
+    { to: '/restaurant-settlements', label: 'Kitchen settlement', icon: I.settle, perm: 'manage' },
     { to: '/riders', label: 'Riders', icon: I.rider },
     { to: '/settlements', label: 'Settlements', icon: I.settle },
     { to: '/cod', label: 'COD cash', icon: I.settle },
@@ -56,6 +57,7 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
   ] },
   { label: 'Finance', links: [
     { to: '/finance', label: 'Profit & loss', icon: I.finance, perm: 'money' },
+    { to: '/profit-per-dish', label: 'Profit per dish', icon: I.items, perm: 'money' },
   ] },
   { label: 'Settings', links: [
     { to: '/admins', label: 'Admins', icon: I.admins, perm: 'admins' },

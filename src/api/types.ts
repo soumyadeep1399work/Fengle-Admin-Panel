@@ -53,6 +53,8 @@ export interface OrderItem {
   portion_label?: string | null;
   /** normal price at the time; unit_price is what was charged (lower while an offer ran) */
   list_price?: Money | null;
+  /** vendor cost snapshotted at placement (super_admin/ops only) */
+  vendor_cost?: Money | null;
 }
 
 export interface LedgerEntry {
@@ -69,6 +71,9 @@ export interface LedgerEntry {
 }
 
 export interface OrderDetail extends OrderRow {
+  /** what Fengle owes the kitchen for this order (super_admin/ops only) */
+  restaurant_payable?: Money | null;
+  payable_estimated?: boolean | number;
   rider_payout_breakdown?: RiderPayBreakdown | null;
   rider_pay_config_id?: number | null;
   cgst_amount?: Money;
@@ -143,6 +148,10 @@ export interface Item {
   offer_active?: boolean | number;
   /** what a customer pays per unit right now */
   effective_price?: Money | null;
+  /** internal: what Fengle pays the kitchen per unit (super_admin/ops only) */
+  vendor_cost?: Money | null;
+  margin?: Money | null;
+  margin_percent?: number | null;
   quantity_value?: Money | null;
   quantity_unit?: QuantityUnit | null;
   portion_label?: string | null;
@@ -375,4 +384,42 @@ export interface CodReconciliation {
   page: number;
   limit: number;
   total_orders: number;
+}
+
+export type SettlementStatus = 'settled' | 'due' | 'advance';
+
+export interface RestaurantSettlementRow {
+  restaurant_id: number; restaurant_name: string; delivered_orders: number;
+  payable_earned: Money; adjustments: Money; paid: Money;
+  total_payable: Money; total_adjustments: Money; total_paid: Money; outstanding: Money;
+  status: SettlementStatus; estimated_orders: number; estimated_orders_total: Money;
+  has_estimated_payables: boolean; last_payment_at: string | null;
+}
+
+export interface SettlementOrderLine {
+  item_id: number; name: string; quantity: number; unit_price: Money; line_subtotal: Money;
+  vendor_cost: Money | null; line_cost: Money; estimated: boolean;
+}
+
+export interface RestaurantPayment {
+  id: number; restaurant_id: number; restaurant_name?: string; amount: Money; paid_at: string;
+  reference: string | null; method: string | null; notes: string | null;
+  recorded_by_admin_id?: number | null; recorded_by_admin_name?: string | null; created_at: string;
+}
+
+export interface RestaurantAdjustment {
+  id: number; restaurant_id: number; amount: Money; reason: string; related_order_id: number | null;
+  created_by_admin_id?: number | null; created_by_admin_name?: string | null; created_at: string;
+}
+
+export interface RestaurantStatement {
+  restaurant: { id: number; name: string; phone?: string };
+  range: { from: string | null; to: string | null };
+  opening_balance: Money; payable_earned: Money; adjustments_total: Money; paid_total: Money;
+  closing_balance: Money; outstanding_now: Money; status: SettlementStatus; estimated_orders: number;
+  days: { date: string; orders: number; payable: Money; estimated_orders: number }[];
+  orders: { order_id: number; delivered_at: string; payable: Money; estimated: boolean; customer_paid_items: Money; items: SettlementOrderLine[] }[];
+  page: number; limit: number; total_orders: number;
+  payments: RestaurantPayment[];
+  adjustments: RestaurantAdjustment[];
 }

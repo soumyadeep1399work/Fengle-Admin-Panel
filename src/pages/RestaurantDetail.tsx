@@ -78,6 +78,7 @@ export default function RestaurantDetail() {
         </div>
         {r && can('manage') && (
           <div className="row">
+            <Link className="btn" to={`/restaurants/${r.id}/settlement`}>Settlement</Link>
             <button className="btn" onClick={() => setEdit(true)}>Edit details</button>
             {STATUS_ACTIONS[r.status].map((a) => (
               <button key={a.to} className={`btn ${a.danger ? 'danger' : ''}`} onClick={() => setStatusTo(a)}>{a.label}</button>

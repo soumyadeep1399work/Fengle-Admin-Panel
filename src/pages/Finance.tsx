@@ -18,7 +18,7 @@ const catLabel = (c: string) => CATEGORIES.find((x) => x.value === c)?.label ?? 
 interface Figures {
   orders_placed: number; gross_order_value: number; delivered_orders: number; delivered_sales: number;
   delivered_item_total: number; delivered_delivery_fees: number; gst_collected: number; commission: number;
-  fengle_revenue: number; restaurant_payables_interim: number; rider_payouts: number; rider_payouts_stored: number;
+  fengle_revenue: number; restaurant_payables: number; payable_estimated_orders: number; restaurant_payables_interim: number; rider_payouts: number; rider_payouts_stored: number;
   rider_payouts_estimated: number; rider_payouts_estimated_orders: number; coupon_discounts: number; gateway_charges: number;
   offer_discounts_info: number; refunds_info: number; cancelled_orders: number; cancelled_value: number;
   in_progress_orders: number; in_progress_value: number; expenses: Record<Category, number>; expenses_total: number; net_profit: number;
@@ -114,7 +114,7 @@ export default function Finance() {
               <div className="stack" style={{ padding: 14 }}>
                 <div className="grid-4">
                   <div className="card stat"><div className="label">Delivered sales</div><div className="value">{money(t.delivered_sales)}</div><div className="sub">{num(t.delivered_orders)} of {num(t.orders_placed)} orders delivered</div></div>
-                  <div className="card stat"><div className="label">Fengle revenue</div><div className="value">{money(t.fengle_revenue)}</div><div className="sub">Commission + delivery fees</div></div>
+                  <div className="card stat"><div className="label">Fengle revenue</div><div className="value">{money(t.fengle_revenue)}</div><div className="sub">Food sales − vendor cost + delivery fees</div></div>
                   <div className="card stat"><div className="label">Costs</div><div className="value">{money(t.rider_payouts + t.coupon_discounts + t.gateway_charges + t.expenses_total)}</div><div className="sub">Riders, discounts, gateway, expenses</div></div>
                   <div className={`card stat ${t.net_profit >= 0 ? 'accent' : ''}`}>
                     <div className="label">Net {t.net_profit >= 0 ? 'profit' : 'loss'}</div>
@@ -126,7 +126,10 @@ export default function Finance() {
                 <div className="grid-2" style={{ alignItems: 'start' }}>
                   <div className="card card-pad">
                     <h3 style={{ marginBottom: 8 }}>Statement</h3>
-                    <Line label="Commission from kitchens" value={t.commission} formula={f.fengle_revenue} />
+                    <Line label="Food sales (as charged)" value={t.delivered_item_total} formula={f.fengle_revenue} />
+                    <Line label="Paid to kitchens (vendor cost)" value={t.restaurant_payables ?? t.restaurant_payables_interim} formula={f.restaurant_payables} sign="−">
+                      {t.payable_estimated_orders > 0 && `${num(t.payable_estimated_orders)} orders estimated: dishes without a vendor cost used the old commission %`}
+                    </Line>
                     <Line label="Delivery fees" value={t.delivered_delivery_fees} formula={f.fengle_revenue} />
                     <Line label="Fengle revenue" value={t.fengle_revenue} formula={f.fengle_revenue} strong />
                     <Line label="Rider payouts" value={t.rider_payouts} formula={f.rider_payouts} sign="−">
@@ -142,9 +145,6 @@ export default function Finance() {
 
                   <div className="card card-pad">
                     <h3 style={{ marginBottom: 8 }}>Not part of Fengle's profit</h3>
-                    <Line label={<>Restaurant payables <span className="badge gold">Interim</span></>} value={t.restaurant_payables_interim} formula={f.restaurant_payables_interim} info>
-                      Item total minus commission, until the kitchen settlement model is decided
-                    </Line>
                     <Line label="GST collected" value={t.gst_collected} formula={f.gst_collected ?? 'GST charged to customers on delivered orders; collected for the government, never revenue'} info>Passed on to the government</Line>
                     <Line label="Dish offer discounts" value={t.offer_discounts_info} formula={f.offer_discounts_info} info>For information: already reflected in lower sales</Line>
                     <Line label="Refunds" value={t.refunds_info} formula={f.refunds_info} info>For information: already reflected in delivered totals</Line>
