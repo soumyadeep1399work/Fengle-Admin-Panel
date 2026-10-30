@@ -106,6 +106,7 @@ export default function RestaurantDetail() {
                   <dt>Owner</dt><dd>{r.owner_name || '—'}</dd>
                   <dt>Email</dt><dd>{r.email || '—'}</dd>
                   <dt>Address</dt><dd>{r.address}</dd>
+                  <dt>Service hours</dt><dd>{r.opens_at ? `${r.opens_at}–${r.closes_at}${(r.closes_at ?? '') < r.opens_at ? ' (overnight)' : ''}` : 'Always open'}{r.is_open_now !== undefined && <span className={`badge ${r.is_open_now ? 'green' : ''}`} style={{ marginLeft: 8 }}>{r.is_open_now ? 'Open now' : 'Closed'}</span>}</dd>
                   <dt>Coordinates</dt><dd className="mono small">{Number(r.lat).toFixed(5)}, {Number(r.lng).toFixed(5)}</dd>
                 </dl>
                 <MapPicker readOnly lat={Number(r.lat)} lng={Number(r.lng)} radiusKm={Number(r.radius_km)} />

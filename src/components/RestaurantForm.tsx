@@ -23,6 +23,9 @@ export default function RestaurantForm({ restaurant, onClose, onSaved }: {
     radius_km: restaurant ? String(Number(restaurant.radius_km)) : '5',
     commission_rate_percent: restaurant ? String(Number(restaurant.commission_rate_percent)) : '15',
     category_ids: [] as number[],
+    always_open: !restaurant?.opens_at,
+    opens_at: restaurant?.opens_at ?? '10:00',
+    closes_at: restaurant?.closes_at ?? '22:00',
   });
   const [err, setErr] = useState('');
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((p) => ({ ...p, [k]: v }));
@@ -33,11 +36,14 @@ export default function RestaurantForm({ restaurant, onClose, onSaved }: {
       address: f.address.trim(), lat: f.lat, lng: f.lng,
       radius_km: Number(f.radius_km), commission_rate_percent: Number(f.commission_rate_percent),
     };
+    // Both hours together, or null/null for always open (the backend refuses one alone).
+    const hours = f.always_open ? { opens_at: null, closes_at: null } : { opens_at: f.opens_at, closes_at: f.closes_at };
     if (editing) {
-      await api.patch(`/admin/restaurants/${restaurant.id}`, body);
+      await api.patch(`/admin/restaurants/${restaurant.id}`, { ...body, ...hours });
       return restaurant.id;
     }
     const res = await api.post<{ restaurant: Restaurant }>('/admin/restaurants', { ...body, category_ids: f.category_ids });
+    if (!f.always_open) await api.patch(`/admin/restaurants/${res.restaurant.id}`, hours);
     return res.restaurant.id;
   }, {
     success: editing ? 'Kitchen updated' : 'Kitchen onboarded',
@@ -51,6 +57,8 @@ export default function RestaurantForm({ restaurant, onClose, onSaved }: {
     if (f.lat == null || f.lng == null) return setErr('Drop the kitchen pin on the map.');
     const r = Number(f.radius_km);
     if (!(r > 0 && r <= 7)) return setErr('Delivery radius must be between 0 and 7 km (7 km is the cascade ceiling).');
+    if (!f.always_open && (!f.opens_at || !f.closes_at)) return setErr('Set both opening and closing times, or tick “Always open”.');
+    if (!f.always_open && f.opens_at === f.closes_at) return setErr('Opening and closing times can’t be the same.');
     const c = Number(f.commission_rate_percent);
     if (!(c >= 0 && c <= 100)) return setErr('Commission must be between 0 and 100%.');
     if (!editing && f.category_ids.length === 0) return setErr('Pick at least one category this kitchen cooks.');
@@ -82,6 +90,18 @@ export default function RestaurantForm({ restaurant, onClose, onSaved }: {
             <input className="input" type="number" step="0.5" min="0" max="100" value={f.commission_rate_percent} onChange={(e) => set('commission_rate_percent', e.target.value)} />
           </Field>
         </div>
+        <Field label="Service hours (India time)" hint={f.always_open ? 'Takes orders at any time of day.'
+          : f.closes_at < f.opens_at ? `Overnight: open ${f.opens_at} to ${f.closes_at} the next morning.` : 'Orders are only routed to this kitchen inside these hours.'}>
+          <div className="row">
+            <label className="check"><input type="checkbox" checked={f.always_open} onChange={(e) => set('always_open', e.target.checked)} /> Always open</label>
+            {!f.always_open && (
+              <>
+                <label className="row small muted">Opens <input className="input" style={{ width: 'auto' }} type="time" value={f.opens_at} onChange={(e) => set('opens_at', e.target.value)} /></label>
+                <label className="row small muted">Closes <input className="input" style={{ width: 'auto' }} type="time" value={f.closes_at} onChange={(e) => set('closes_at', e.target.value)} /></label>
+              </>
+            )}
+          </div>
+        </Field>
         {!editing && (
           <Field label="Categories this kitchen cooks">
             <div className="chips">

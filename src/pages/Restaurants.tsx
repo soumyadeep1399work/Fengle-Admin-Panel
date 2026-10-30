@@ -49,13 +49,17 @@ export default function Restaurants() {
           {rows.length === 0 ? <Empty title="No kitchens match" /> : (
             <div className="table-wrap">
               <table className="tbl">
-                <thead><tr><th>Kitchen</th><th>Status</th><th>Address</th><th className="num">Radius</th><th className="num">Commission</th><th className="num">Orders</th><th>Selfie</th><th>Documents</th><th>Bank</th></tr></thead>
+                <thead><tr><th>Kitchen</th><th>Status</th><th>Address</th><th>Hours</th><th className="num">Radius</th><th className="num">Commission</th><th className="num">Orders</th><th>Selfie</th><th>Documents</th><th>Bank</th></tr></thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.id} className="clickable" onClick={() => nav(`/restaurants/${r.id}`)}>
                       <td><div className="cell-main">{r.name}</div><div className="cell-sub">{r.phone}{r.owner_name ? ` · ${r.owner_name}` : ''}</div></td>
                       <td><StatusBadge status={r.status} /></td>
                       <td className="muted small" style={{ maxWidth: 320 }}>{r.address}</td>
+                      <td className="nowrap small">
+                        {r.is_open_now === undefined ? '—' : <span className={`badge ${r.is_open_now ? 'green' : ''}`}>{r.is_open_now ? 'Open now' : 'Closed'}</span>}
+                        <div className="cell-sub">{r.opens_at ? `${r.opens_at}–${r.closes_at}` : 'Always open'}</div>
+                      </td>
                       <td className="num">{Number(r.radius_km)} km</td>
                       <td className="num">{Number(r.commission_rate_percent)}%</td>
                       <td className="num">{r.order_count !== undefined ? num(r.order_count) : '—'}</td>

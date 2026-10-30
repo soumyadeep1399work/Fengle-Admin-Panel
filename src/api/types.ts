@@ -174,6 +174,10 @@ export interface Restaurant {
   radius_km: Money;
   commission_rate_percent: Money;
   status: PartnerStatus;
+  /** daily service window, IST "HH:MM"; both null = always open; closes < opens = overnight */
+  opens_at?: string | null;
+  closes_at?: string | null;
+  is_open_now?: boolean;
   created_at?: string;
   categories?: { id: number; name: string }[];
   order_count?: number;
