@@ -3,7 +3,7 @@ import { api } from '../api/client';
 import { errMsg } from './ui';
 
 /** Uploads to POST /uploads/image (S3 on the live server) and hands back the public URL. */
-export default function ImageUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+export default function ImageUpload({ value, onChange, banner }: { value: string; onChange: (url: string) => void; banner?: boolean }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -16,7 +16,7 @@ export default function ImageUpload({ value, onChange }: { value: string; onChan
     try {
       const fd = new FormData();
       fd.append('image', file);
-      const { url } = await api.post<{ url: string }>('/uploads/image', fd);
+      const { url } = await api.post<{ url: string }>(banner ? '/uploads/image?purpose=banner' : '/uploads/image', fd); // banner = keep a larger, full-screen size
       onChange(url);
     } catch (e) {
       setErr(errMsg(e));

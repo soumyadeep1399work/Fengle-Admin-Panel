@@ -55,6 +55,7 @@ const NAV: { label: string; links: { to: string; label: string; icon: string; en
     { to: '/customers', label: 'Customers', icon: I.users },
     { to: '/campaigns', label: 'Campaign audience', icon: I.promo, perm: 'money' },
     { to: '/coupons', label: 'Coupons', icon: I.coupon },
+    { to: '/onboarding-slides', label: 'Intro slides', icon: I.promo },
     { to: '/notifications', label: 'Notifications', icon: I.bell, perm: 'money' },
   ] },
   { label: 'Finance', links: [
