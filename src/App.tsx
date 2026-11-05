@@ -18,6 +18,7 @@ import CustomerDetail from './pages/CustomerDetail';
 import Campaigns from './pages/Campaigns';
 import Coupons from './pages/Coupons';
 import OnboardingSlides from './pages/OnboardingSlides';
+import AppNotices from './pages/AppNotices';
 import Admins from './pages/Admins';
 import Documents from './pages/Documents';
 import Shipping from './pages/Shipping';
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="campaigns" element={can('money') ? <Campaigns /> : home} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="onboarding-slides" element={<OnboardingSlides />} />
+        <Route path="app-notice" element={<AppNotices />} />
         <Route path="notifications" element={can('money') ? <Notifications /> : home} />
         <Route path="admins" element={can('admins') ? <Admins /> : home} />
         <Route path="*" element={<Navigate to="/" replace />} />
